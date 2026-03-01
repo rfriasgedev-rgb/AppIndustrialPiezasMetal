@@ -1,0 +1,210 @@
+import { useEffect, useState } from 'react';
+import API from '../api/client';
+import { Bar, Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend } from 'chart.js';
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
+
+const STATUS_LABELS = {
+    DRAFT: 'Borrador', PENDING_MATERIAL: 'Esperando Material', CUTTING: 'Corte',
+    BENDING: 'Doblado', ASSEMBLY: 'Ensamblaje', CLEANING: 'Limpieza',
+    PAINTING: 'Pintura', QUALITY_CHECK: 'Control Calidad', READY_FOR_DELIVERY: 'Listo p/Entrega',
+    DELIVERED: 'Entregado', CANCELLED: 'Cancelado',
+};
+const STATUS_COLORS = {
+    DRAFT: '#6c757d', PENDING_MATERIAL: '#fd7e14', CUTTING: '#007bff',
+    BENDING: '#17a2b8', ASSEMBLY: '#6f42c1', CLEANING: '#20c997',
+    PAINTING: '#e94560', QUALITY_CHECK: '#ffc107', READY_FOR_DELIVERY: '#28a745',
+    DELIVERED: '#155724', CANCELLED: '#dc3545',
+};
+
+const StatCard = ({ icon, value, label, color }) => (
+    <div className="col-lg-3 col-sm-6 mb-4 d-flex align-items-stretch">
+        <div
+            className="small-box stat-card-hover w-100"
+            style={{
+                borderRadius: '16px',
+                background: color,
+                color: '#fff',
+                boxShadow: `0 8px 25px ${color}66`,
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+            }}
+        >
+            <div className="inner" style={{ padding: '20px', position: 'relative', zIndex: 2 }}>
+                <h3 style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0 }}>{value}</h3>
+                <p style={{ fontSize: '1rem', fontWeight: 500, opacity: 0.9 }}>{label}</p>
+            </div>
+            <div className="icon" style={{
+                position: 'absolute',
+                right: '15px',
+                top: '10px',
+                fontSize: '4.5rem',
+                color: 'rgba(255,255,255,0.2)',
+                zIndex: 1
+            }}>
+                <i className={icon}></i>
+            </div>
+        </div>
+    </div>
+);
+
+export default function Dashboard() {
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        API.get('/dashboard/stats').then(r => { setStats(r.data); setLoading(false); }).catch(() => setLoading(false));
+    }, []);
+
+    if (loading) return <div className="text-center pt-5"><i className="fas fa-spinner fa-spin fa-3x text-secondary"></i></div>;
+    if (!stats) return <div className="alert alert-danger">Error al cargar datos.</div>;
+
+    const { orders, ordersByStatus, inventoryAlerts, inventoryTotalItems, inventoryTotalValue, criticalMaterials, totalClients, recentOrders } = stats;
+
+    // Configuración del Doughnut Chart
+    const doughnutData = {
+        labels: ordersByStatus.map(s => STATUS_LABELS[s.status] || s.status),
+        datasets: [{
+            data: ordersByStatus.map(s => s.count),
+            backgroundColor: ordersByStatus.map(s => STATUS_COLORS[s.status] || '#999'),
+            borderWidth: 2,
+            borderColor: '#f4f6f9',
+            hoverOffset: 4
+        }],
+    };
+
+    // Configuración del Bar Chart
+    const barData = {
+        labels: criticalMaterials?.map(m => m.name.substring(0, 15) + '...'),
+        datasets: [
+            {
+                label: 'Stock Actual',
+                data: criticalMaterials?.map(m => parseFloat(m.quantity_available)),
+                backgroundColor: '#e94560',
+                borderRadius: 4,
+            },
+            {
+                label: 'Punto Mínimo',
+                data: criticalMaterials?.map(m => parseFloat(m.reorder_point)),
+                backgroundColor: '#16213e',
+                borderRadius: 4,
+            }
+        ],
+    };
+
+    return (
+        <>
+            <style>
+                {`
+                .stat-card-hover:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,0.2) !important; }
+                .list-group-item-hover:hover { background-color: #f8f9fa; transform: translateX(5px); transition: all 0.2s; }
+                `}
+            </style>
+
+            <div className="content-header mb-4">
+                <h1 style={{ fontWeight: 800, color: '#16213e' }}><i className="fas fa-tachometer-alt mr-2 text-danger"></i>Resumen General</h1>
+                <small className="text-muted" style={{ fontSize: '1.1rem' }}>Estado operativo de la fábrica e inventario en tiempo real.</small>
+            </div>
+
+            {/* Fila 1: KPIs de Producción y Ventas */}
+            <div className="row">
+                <StatCard icon="fas fa-industry" value={orders.total} label="Órdenes Creadas" color="#0f3460" />
+                <StatCard icon="fas fa-cog fa-spin" value={orders.active} label="Órdenes en Producción" color="#e94560" />
+                <StatCard icon="fas fa-check-circle" value={orders.delivered} label="Órdenes Entregadas" color="#28a745" />
+                <StatCard icon="fas fa-users" value={totalClients} label="Base de Clientes" color="#17a2b8" />
+            </div>
+
+            {/* Fila 2: KPIs de Inventario */}
+            <div className="row">
+                <StatCard icon="fas fa-box-open" value={inventoryTotalItems} label="Materiales Activos" color="#6f42c1" />
+                <StatCard icon="fas fa-exclamation-triangle" value={inventoryAlerts} label="Alertas de Stock" color="#fd7e14" />
+                <StatCard icon="fas fa-dollar-sign" value={`$${parseFloat(inventoryTotalValue).toFixed(2)}`} label="Valor de Inventario" color="#20c997" />
+                <StatCard icon="fas fa-times-circle" value={orders.cancelled || 0} label="Órdenes Canceladas" color="#dc3545" />
+            </div>
+
+            <div className="row mt-3">
+                {/* Gráfico de Barras: Top Materiales Críticos */}
+                <div className="col-lg-6 mb-4">
+                    <div className="card h-100" style={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+                        <div className="card-header pb-0" style={{ background: '#fff', borderBottom: 'none', borderRadius: '16px 16px 0 0' }}>
+                            <h3 className="card-title font-weight-bold" style={{ color: '#16213e' }}>
+                                <i className="fas fa-chart-bar mr-2 text-danger"></i>Stock Crítico (Reabastecer)
+                            </h3>
+                        </div>
+                        <div className="card-body">
+                            {criticalMaterials && criticalMaterials.length > 0 ? (
+                                <Bar data={barData} options={{ responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }} height={250} />
+                            ) : (
+                                <div className="d-flex h-100 align-items-center justify-content-center text-muted">
+                                    <span><i className="fas fa-check-circle mr-2 text-success"></i>Todo el inventario está en niveles óptimos</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Doughnut: Órdenes por estado */}
+                <div className="col-lg-6 mb-4">
+                    <div className="card h-100" style={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+                        <div className="card-header pb-0" style={{ background: '#fff', borderBottom: 'none', borderRadius: '16px 16px 0 0' }}>
+                            <h3 className="card-title font-weight-bold" style={{ color: '#16213e' }}>
+                                <i className="fas fa-chart-pie mr-2 text-primary"></i>Distribución de Órdenes
+                            </h3>
+                        </div>
+                        <div className="card-body">
+                            <div style={{ height: '250px', position: 'relative' }}>
+                                <Doughnut data={doughnutData} options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 10 } } },
+                                    cutout: '65%'
+                                }} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="row">
+                {/* Órdenes Recientes Mejoradas */}
+                <div className="col-lg-12">
+                    <div className="card" style={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+                        <div className="card-header" style={{ background: '#1a1a2e', color: '#fff', borderRadius: '16px 16px 0 0' }}>
+                            <h3 className="card-title"><i className="fas fa-stream mr-2 text-danger"></i>Últimas Órdenes Generadas</h3>
+                        </div>
+                        <div className="card-body p-0">
+                            <ul className="list-group list-group-flush">
+                                {recentOrders.map(o => {
+                                    const dateStr = new Date(o.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+                                    return (
+                                        <li key={o.order_number} className="list-group-item list-group-item-hover d-flex justify-content-between align-items-center" style={{ borderLeft: `5px solid ${STATUS_COLORS[o.status] || '#999'}` }}>
+                                            <div className="d-flex align-items-center">
+                                                <div className="mr-3 text-center" style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#f4f6f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#16213e' }}>
+                                                    <i className="fas fa-receipt"></i>
+                                                </div>
+                                                <div>
+                                                    <strong style={{ fontSize: '1.1rem', color: '#e94560' }}>{o.order_number}</strong>
+                                                    <br /><span className="text-secondary"><i className="fas fa-building mr-1"></i>{o.client_name}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="badge" style={{ background: STATUS_COLORS[o.status] || '#999', color: '#fff', fontSize: '0.85rem', padding: '6px 12px', borderRadius: '20px' }}>
+                                                    {STATUS_LABELS[o.status] || o.status}
+                                                </div>
+                                                <div className="text-muted mt-1" style={{ fontSize: '0.8rem' }}><i className="far fa-clock mr-1"></i>{dateStr}</div>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                                {recentOrders.length === 0 && (
+                                    <li className="list-group-item text-center p-4 text-muted">Aún no se han generado órdenes de producción.</li>
+                                )}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+}
