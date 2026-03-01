@@ -89,7 +89,7 @@ export default function AppLayout({ children }) {
                                             <i className="right fas fa-angle-left"></i>
                                         </p>
                                     </a>
-                                    <ul className="nav nav-treeview" style={{ display: location.pathname.startsWith('/units') || location.pathname.startsWith('/categories') ? 'block' : 'none' }}>
+                                    <ul className="nav nav-treeview">
                                         <li className="nav-item">
                                             <Link to="/categories" className={`nav-link ${location.pathname === '/categories' ? 'active' : ''}`} style={location.pathname === '/categories' ? { color: '#1a1a2e', fontWeight: 'bold' } : { color: '#c2c7d0' }}>
                                                 <i className="fas fa-cubes nav-icon"></i>
