@@ -1,0 +1,10 @@
+[debug] [2026-03-01T15:56:31.265Z] ----------------------------------------------------------------------
+[debug] [2026-03-01T15:56:31.269Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\rafa\.npm-global\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting --project metalerp-produccion --debug
+[debug] [2026-03-01T15:56:31.269Z] CLI Version:   15.8.0
+[debug] [2026-03-01T15:56:31.270Z] Platform:      win32
+[debug] [2026-03-01T15:56:31.270Z] Node Version:  v20.17.0
+[debug] [2026-03-01T15:56:31.270Z] Time:          Sun Mar 01 2026 11:56:31 GMT-0400 (Venezuela Time)
+[debug] [2026-03-01T15:56:31.270Z] ----------------------------------------------------------------------
+[debug] 
+[error] 
+[error] Error: Not in a Firebase app directory (could not locate firebase.json)
