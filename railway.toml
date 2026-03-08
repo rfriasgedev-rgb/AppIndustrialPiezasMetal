@@ -6,6 +6,7 @@ buildCommand = "npm run build"
 nixPkgs = ["nodejs_18"]
 
 [deploy]
+predeployCommand = "npm run db:migrate --prefix backend && npm run db:seed --prefix backend"
 startCommand = "npm run start"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 100
