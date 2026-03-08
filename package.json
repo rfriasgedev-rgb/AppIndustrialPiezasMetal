@@ -1,0 +1,12 @@
+{
+    "name": "metal-erp-root",
+    "version": "1.0.0",
+    "description": "Root package for deploying MetalERP to Railway",
+    "scripts": {
+        "build": "npm run build --prefix frontend",
+        "start": "npm run start --prefix backend"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}
