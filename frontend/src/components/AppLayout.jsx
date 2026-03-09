@@ -61,7 +61,7 @@ export default function AppLayout({ children }) {
                 </a>
                 <div className="sidebar">
                     <nav className="mt-2">
-                        <ul className="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                        <ul className="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
                             {navItems.map(item => {
                                 if (item.roles && !hasRole(...item.roles)) return null;
                                 const active = location.pathname === item.path;
@@ -81,7 +81,7 @@ export default function AppLayout({ children }) {
 
                             {/* Configurations Submenu - Only ADMIN */}
                             {hasRole('ADMIN') && (
-                                <li className={`nav-item ${location.pathname.startsWith('/units') || location.pathname.startsWith('/categories') ? 'menu-open' : ''}`}>
+                                <li className={`nav-item has-treeview ${location.pathname.startsWith('/units') || location.pathname.startsWith('/categories') ? 'menu-open' : ''}`}>
                                     <a href="#" className={`nav-link ${location.pathname.startsWith('/units') || location.pathname.startsWith('/categories') ? 'active' : ''}`} style={location.pathname.startsWith('/units') || location.pathname.startsWith('/categories') ? { background: '#e94560' } : { color: '#c2c7d0' }}>
                                         <i className="nav-icon fas fa-cogs"></i>
                                         <p>
