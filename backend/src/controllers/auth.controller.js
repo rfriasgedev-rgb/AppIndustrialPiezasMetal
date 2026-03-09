@@ -28,8 +28,15 @@ const login = async (req, res, next) => {
 
         auditLog(pool, { tableName: 'users', recordId: user.id, action: 'UPDATE', newValues: { last_login: 'NOW()' }, userId: user.id, req });
 
+        // Set HttpOnly Cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 8 * 60 * 60 * 1000 // 8 hours
+        });
+
         res.json({
-            token,
             user: { id: user.id, fullName: user.full_name, email: user.email, role: user.role },
         });
     } catch (err) {
@@ -41,4 +48,13 @@ const me = async (req, res) => {
     res.json({ user: req.user });
 };
 
-module.exports = { login, me };
+const logout = async (req, res) => {
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+    });
+    res.json({ message: 'Sesión cerrada exitosamente.' });
+};
+
+module.exports = { login, me, logout };

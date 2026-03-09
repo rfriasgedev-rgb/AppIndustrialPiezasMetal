@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/users.routes');
@@ -39,6 +40,7 @@ app.use(helmet({
 }));
 app.use(morgan('dev'));
 app.use(express.json());
+app.use(cookieParser());
 
 // Servir archivos estáticos (imágenes)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

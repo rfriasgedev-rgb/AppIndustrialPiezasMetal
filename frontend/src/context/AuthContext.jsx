@@ -10,14 +10,17 @@ export const AuthProvider = ({ children }) => {
 
     const login = useCallback(async (email, password) => {
         const { data } = await API.post('/auth/login', { email, password });
-        localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
         return data.user;
     }, []);
 
-    const logout = useCallback(() => {
-        localStorage.removeItem('token');
+    const logout = useCallback(async () => {
+        try {
+            await API.post('/auth/logout');
+        } catch (e) {
+            console.error('Logout error', e);
+        }
         localStorage.removeItem('user');
         setUser(null);
     }, []);
