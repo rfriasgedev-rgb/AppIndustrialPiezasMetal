@@ -44,7 +44,10 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use(express.urlencoded({ extended: true }));
 
+const { globalLimiter } = require('./middlewares/rateLimiter.middleware');
+
 // Routes
+app.use('/api/', globalLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/clients', clientRoutes);
