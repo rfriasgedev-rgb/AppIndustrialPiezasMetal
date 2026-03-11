@@ -7,7 +7,7 @@ const getAll = async (req, res, next) => {
     try {
         const [rows] = await pool.query(
             `SELECT u.id, u.full_name, u.email, u.is_active, u.last_login, u.created_at, r.name as role
-       FROM users u JOIN roles r ON u.role_id = r.id ORDER BY u.full_name`
+       FROM users u JOIN roles r ON u.role_id = r.id ORDER BY u.full_name LIMIT 1000`
         );
         res.json(rows);
     } catch (err) { next(err); }

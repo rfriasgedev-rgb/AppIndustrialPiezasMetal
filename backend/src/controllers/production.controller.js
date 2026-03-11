@@ -32,7 +32,7 @@ const getAll = async (req, res, next) => {
         const params = [];
         if (status) { query += ' AND po.status = ?'; params.push(status); }
         if (client_id) { query += ' AND po.client_id = ?'; params.push(client_id); }
-        query += ' ORDER BY FIELD(po.priority,"URGENT","HIGH","NORMAL","LOW"), po.created_at DESC';
+        query += ' ORDER BY FIELD(po.priority,"URGENT","HIGH","NORMAL","LOW"), po.created_at DESC LIMIT 1000';
         const [rows] = await pool.query(query, params);
 
         // Calcular porcentaje al vuelo

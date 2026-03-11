@@ -8,7 +8,7 @@ const getAll = async (req, res, next) => {
     try {
         const [rows] = await pool.query(
             `SELECT id, name, part_number, description, requires_assembly, standard_hours, sale_price, image_url, is_active, created_at
-       FROM product_catalog ORDER BY name`
+       FROM product_catalog ORDER BY name LIMIT 1000`
         );
         res.json(rows);
     } catch (err) { next(err); }

@@ -10,7 +10,7 @@ const getAll = async (req, res, next) => {
        FROM inventory_items i 
        JOIN material_categories c ON i.category_id = c.id
        LEFT JOIN measurement_units u ON i.unit_of_measure_id = u.id
-       ORDER BY i.is_active DESC, c.name, i.name`
+       ORDER BY i.is_active DESC, c.name, i.name LIMIT 1000`
         );
         res.json(rows);
     } catch (err) { next(err); }

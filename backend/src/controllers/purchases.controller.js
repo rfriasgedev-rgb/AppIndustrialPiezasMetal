@@ -7,7 +7,7 @@ const getAll = async (req, res, next) => {
         const [rows] = await pool.query(
             `SELECT p.*, i.name as item_name, u.full_name as created_by_name
        FROM purchases p JOIN inventory_items i ON p.item_id = i.id
-       JOIN users u ON p.created_by = u.id ORDER BY p.created_at DESC`
+       JOIN users u ON p.created_by = u.id ORDER BY p.created_at DESC LIMIT 1000`
         );
         res.json(rows);
     } catch (err) { next(err); }

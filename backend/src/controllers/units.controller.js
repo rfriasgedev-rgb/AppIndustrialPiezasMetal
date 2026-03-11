@@ -5,7 +5,7 @@ const { auditLog } = require('../services/audit.service');
 // GET /units
 const getAll = async (req, res, next) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM measurement_units ORDER BY name ASC');
+        const [rows] = await pool.query('SELECT * FROM measurement_units ORDER BY name ASC LIMIT 1000');
         res.json(rows);
     } catch (err) { next(err); }
 };
