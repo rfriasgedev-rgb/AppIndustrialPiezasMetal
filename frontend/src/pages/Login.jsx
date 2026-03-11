@@ -7,19 +7,47 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isWakingUp, setIsWakingUp] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+
+    const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        try {
-            await login(email, password);
-            navigate('/');
-        } catch (err) {
-            toast.error(err.response?.data?.error || 'Error al iniciar sesión.');
-        } finally {
-            setLoading(false);
+        setIsWakingUp(false);
+
+        let attempts = 0;
+        const maxAttempts = 6; // Max 30 seconds wait
+
+        while (attempts < maxAttempts) {
+            try {
+                await login(email, password);
+                if (attempts > 0) {
+                    toast.success('¡Servidor conectado exitosamente!');
+                }
+                navigate('/');
+                return; // Exit on success
+            } catch (err) {
+                const status = err.response?.status;
+                // Railway free tier gives 502/503/504 or network error when cold starting
+                const isSleepError = !err.response || status === 502 || status === 503 || status === 504;
+
+                if (isSleepError && attempts < maxAttempts - 1) {
+                    attempts++;
+                    if (!isWakingUp || attempts === 1) {
+                        setIsWakingUp(true);
+                        toast.info('Servidor hibernando. Despertando máquina... (puede tomar hasta 30 segundos)', { autoClose: 10000 });
+                    }
+                    await delay(5000); // 5 seconds interval
+                } else {
+                    toast.error(err.response?.data?.error || (isSleepError ? 'El servidor tardó demasiado en responder. Intente de nuevo.' : 'Error al iniciar sesión.'));
+                    setLoading(false);
+                    setIsWakingUp(false);
+                    return; // Exit loop on normal error
+                }
+            }
         }
     };
 
@@ -69,8 +97,12 @@ export default function Login() {
                                         disabled={loading}
                                         style={{ background: '#e94560', color: '#fff', borderRadius: '8px', fontWeight: 600, padding: '10px' }}
                                     >
-                                        {loading ? <><i className="fas fa-spinner fa-spin mr-2"></i>Ingresando...</> : <>
-                                            <i className="fas fa-sign-in-alt mr-2"></i>Ingresar al Sistema</>}
+                                        {loading ? (
+                                            isWakingUp ? <><i className="fas fa-satellite-dish fa-spin mr-2"></i>Conectando Nube...</>
+                                                : <><i className="fas fa-spinner fa-spin mr-2"></i>Ingresando...</>
+                                        ) : (
+                                            <><i className="fas fa-sign-in-alt mr-2"></i>Ingresar al Sistema</>
+                                        )}
                                     </button>
                                 </div>
                             </div>
