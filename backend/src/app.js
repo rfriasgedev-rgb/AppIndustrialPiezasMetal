@@ -50,6 +50,15 @@ const { globalLimiter } = require('./middlewares/rateLimiter.middleware');
 
 // Routes
 app.use('/api/', globalLimiter);
+app.use('/api/', (req, res, next) => {
+    // Si la ruta es health, dejarla pasar para monitoreo
+    if (req.path === '/health') return next();
+    
+    if (global.isDbReady === false) {
+        return res.status(503).json({ error: 'El servidor está despertando base de datos...' });
+    }
+    next();
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/clients', clientRoutes);

@@ -109,11 +109,25 @@ async function seed() {
         console.log('✅ Catálogo de productos (10 piezas de prueba) creados/verificados.');
 
         console.log('\n🚀 Seed completado. Ya puedes iniciar el servidor.');
+        return true;
     } catch (err) {
         console.error('❌ Error en seed:', err);
+        return false;
     } finally {
-        await pool.end();
+        // En entorno de ejecución como módulo exportado, preferimos no cerrar el pool
+        // para que la API usando el mismo módulo de conexión pueda continuar, pero este
+        // script usa su propia lógica a veces. `pool.end()` cerraría todas las conexiones
+        // de la API! Así que no podemos llamar pool.end() si se exporta.
+        if (require.main === module) {
+            await pool.end();
+        }
     }
 }
 
-seed();
+if (require.main === module) {
+    seed().then(success => {
+        if (!success) process.exit(1);
+    });
+}
+
+module.exports = { seed };

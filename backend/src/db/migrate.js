@@ -41,9 +41,10 @@ async function migrate() {
         }
 
         console.log('✅ Migraciones completadas exitosamente.');
+        return true;
     } catch (error) {
         console.error('❌ Error ejecutando migraciones:', error);
-        process.exit(1);
+        return false;
     } finally {
         if (connection) {
             await connection.end();
@@ -51,4 +52,10 @@ async function migrate() {
     }
 }
 
-migrate();
+if (require.main === module) {
+    migrate().then(success => {
+        if (!success) process.exit(1);
+    });
+}
+
+module.exports = { migrate };

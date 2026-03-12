@@ -2,6 +2,10 @@ require('dotenv').config();
 const app = require('./app');
 const { testConnection } = require('./db/connection');
 
+global.isDbReady = false;
+const { migrate } = require('./db/migrate');
+const { seed } = require('./db/seed');
+
 const PORT = process.env.PORT || 3001;
 
 // Inicia el servidor HTTP aunque MySQL no esté disponible aún
@@ -12,11 +16,19 @@ app.listen(PORT, () => {
     attemptDbConnection();
 });
 
-async function attemptDbConnection(retries = 5, delay = 3000) {
+async function attemptDbConnection(retries = 15, delay = 5000) {
     for (let i = 1; i <= retries; i++) {
         try {
             await testConnection();
             console.log('✅ [DB] Base de datos conectada y lista.');
+            
+            // Correr migraciones y seeds ahora que la DB conectó
+            const migrateSuccess = await migrate();
+            if (migrateSuccess) {
+                await seed();
+            }
+
+            global.isDbReady = true;
             return;
         } catch (err) {
             console.warn(`⚠️  [DB] Intento ${i}/${retries} fallido: ${err.message}`);
@@ -27,5 +39,5 @@ async function attemptDbConnection(retries = 5, delay = 3000) {
         }
     }
     console.error('❌ [DB] No se pudo conectar a MySQL. Verifica que el servicio esté activo.');
-    console.error('   Las rutas de la API devolverán error 503 hasta que MySQL esté disponible.');
+    console.error('   Las rutas de la API devolverán error 503 permanentemente.');
 }

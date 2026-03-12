@@ -19,12 +19,25 @@ export default function Login() {
         setIsWakingUp(false);
 
         let attempts = 0;
-        const maxAttempts = 6; // Max 30 seconds wait
+        const maxAttempts = 12; // Max retries
+        let attemptSucceeded = false;
+
+        // Alert user if the very first request hangs (Railway proxy holding connection)
+        const slowResponseTimeout = setTimeout(() => {
+            if (!attemptSucceeded) {
+                setIsWakingUp(true);
+                toast.info('El servidor está en hibernación. Despertando la base de datos y máquina... (puede tomar más de un minuto)', { autoClose: 20000 });
+            }
+        }, 5000);
 
         while (attempts < maxAttempts) {
             try {
                 await login(email, password);
-                if (attempts > 0) {
+                attemptSucceeded = true;
+                clearTimeout(slowResponseTimeout);
+
+                const showingWakeUpUI = attempts > 0 || document.querySelector('.fa-satellite-dish');
+                if (showingWakeUpUI) {
                     toast.success('¡Servidor conectado exitosamente!');
                 }
                 navigate('/');
@@ -36,13 +49,20 @@ export default function Login() {
 
                 if (isSleepError && attempts < maxAttempts - 1) {
                     attempts++;
-                    if (!isWakingUp || attempts === 1) {
-                        setIsWakingUp(true);
-                        toast.info('Servidor hibernando. Despertando máquina... (puede tomar hasta 30 segundos)', { autoClose: 10000 });
+                    if (attempts === 1 && attemptSucceeded === false) {
+                        // Make sure we show the toast if not already shown by the setTimeout
+                        if (!document.querySelector('.fa-satellite-dish')) {
+                            setIsWakingUp(true);
+                            toast.info('Servidor en hibernación, activando sistema...', { autoClose: 20000 });
+                        }
                     }
-                    await delay(5000); // 5 seconds interval
+                    // Progressive delay to allow the server enough time to boot
+                    const waitTime = attempts <= 3 ? 5000 : 8000;
+                    await delay(waitTime); 
                 } else {
-                    toast.error(err.response?.data?.error || (isSleepError ? 'El servidor tardó demasiado en responder. Intente de nuevo.' : 'Error al iniciar sesión.'));
+                    attemptSucceeded = true;
+                    clearTimeout(slowResponseTimeout);
+                    toast.error(err.response?.data?.error || (isSleepError ? 'El servidor tardó demasiado en iniciar. Por favor intente de nuevo en unos momentos.' : 'Error al iniciar sesión.'));
                     setLoading(false);
                     setIsWakingUp(false);
                     return; // Exit loop on normal error
