@@ -7,14 +7,18 @@ async function migrate() {
     console.log('🔄 Ejecutando migraciones de base de datos...');
     let connection;
     try {
-        connection = await mysql.createConnection({
+        const dbConfig = process.env.MYSQL_URL || process.env.DATABASE_URL || {
             host: process.env.DB_HOST || 'localhost',
             port: process.env.DB_PORT || 3306,
             user: process.env.DB_USER || 'root',
             password: process.env.DB_PASSWORD || '',
-            database: process.env.DB_NAME || 'metal_parts_db',
-            multipleStatements: true
-        });
+            database: process.env.DB_NAME || 'metal_parts_db'
+        };
+        const connectionConfig = typeof dbConfig === 'string'
+            ? { uri: dbConfig, multipleStatements: true }
+            : { ...dbConfig, multipleStatements: true };
+
+        connection = await mysql.createConnection(connectionConfig);
 
         // 1. Ejecutar schema básico
         const schemaPath = path.join(__dirname, 'schema.sql');
