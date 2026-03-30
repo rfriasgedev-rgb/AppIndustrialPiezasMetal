@@ -5,11 +5,13 @@ const API = axios.create({
     withCredentials: true // Crucial para enviar y recibir HttpOnly cookies
 });
 
-// Handle 401 globally
+// Handle 401 globally but ignore login route
 API.interceptors.response.use(
     (res) => res,
     (err) => {
-        if (err.response?.status === 401) {
+        // Ignorar 401 si viene de la ruta de login para permitir mostrar el error en pantalla
+        const isLoginRoute = err.config?.url?.includes('/auth/login');
+        if (err.response?.status === 401 && !isLoginRoute) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';
