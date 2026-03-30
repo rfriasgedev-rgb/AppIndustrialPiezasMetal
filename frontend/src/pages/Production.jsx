@@ -240,7 +240,7 @@ export default function Production() {
             </div>
 
             {/* Filtros por estado */}
-            <div className="card mb-3" style={{ borderRadius: '12px' }}>
+            <div className="card mb-3">
                 <div className="card-body py-2 d-flex gap-2 flex-wrap">
                     <button className={`btn btn-sm ${filterStatus === '' ? 'btn-dark' : 'btn-outline-dark'} mr-1`} onClick={() => setFilterStatus('')}>Todas</button>
                     {Object.entries(STATUS_LABELS).map(([k, v]) => (
@@ -250,11 +250,11 @@ export default function Production() {
             </div>
 
             {loading ? <div className="text-center pt-5"><i className="fas fa-spinner fa-spin fa-3x text-secondary"></i></div> : (
-                <div className="card" style={{ borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+                <div className="card">
                     <div className="card-body p-0">
                         <div className="table-responsive">
                             <table className="table table-hover mb-0">
-                                <thead style={{ background: '#1a1a2e', color: '#fff' }}>
+                                <thead>
                                     <tr>
                                         <th>N° Orden</th><th>Cliente</th><th>Pieza/Producto</th><th>Cant.</th>
                                         <th>Estado</th><th>Prioridad</th><th>Entrega Est.</th><th>Acciones</th>
@@ -324,12 +324,12 @@ export default function Production() {
 
             {/* Modal Crear/Editar Orden */}
             {showModal && (
-                <div className="modal d-block" style={{ background: 'rgba(0,0,0,0.5)', overflowY: 'auto' }}>
+                <div className="modal d-block" style={{ background: 'rgba(15,23,42,0.4)', overflowY: 'auto' }}>
                     <div className="modal-dialog modal-lg">
-                        <div className="modal-content" style={{ borderRadius: '12px' }}>
-                            <div className="modal-header" style={{ background: '#1a1a2e', color: '#fff', borderRadius: '12px 12px 0 0' }}>
-                                <h5 className="modal-title">{isEditing ? 'Editar Orden de Producción' : 'Nueva Orden de Producción'}</h5>
-                                <button type="button" className="close text-white" onClick={() => setShowModal(false)}><span>&times;</span></button>
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title font-weight-bold">{isEditing ? 'Editar Orden de Producción' : 'Nueva Orden de Producción'}</h5>
+                                <button type="button" className="close" onClick={() => setShowModal(false)}><span>&times;</span></button>
                             </div>
                             <form onSubmit={handleSave}>
                                 <div className="modal-body">

@@ -6,8 +6,12 @@ const { auditLog } = require('../services/audit.service');
 const getAll = async (req, res, next) => {
     try {
         const [rows] = await pool.query(
-            `SELECT u.id, u.full_name, u.email, u.is_active, u.last_login, u.created_at, r.name as role
-       FROM users u JOIN roles r ON u.role_id = r.id ORDER BY u.full_name LIMIT 1000`
+            `SELECT u.id, u.full_name, u.email, u.is_active, u.last_login, u.created_at, r.name as role, u.department_id, u.shift_id, d.name as department_name, s.name as shift_name
+             FROM users u 
+             JOIN roles r ON u.role_id = r.id 
+             LEFT JOIN departments d ON u.department_id = d.id
+             LEFT JOIN shifts s ON u.shift_id = s.id
+             ORDER BY u.full_name LIMIT 1000`
         );
         res.json(rows);
     } catch (err) { next(err); }
@@ -15,7 +19,7 @@ const getAll = async (req, res, next) => {
 
 const create = async (req, res, next) => {
     try {
-        const { full_name, email, password, role_id } = req.body;
+        const { full_name, email, password, role_id, department_id, shift_id } = req.body;
         if (!full_name || !email || !password || !role_id)
             return res.status(400).json({ error: 'Todos los campos son requeridos.' });
 
@@ -25,8 +29,8 @@ const create = async (req, res, next) => {
         const id = uuidv4();
         const password_hash = await bcrypt.hash(password, 10);
         await pool.query(
-            'INSERT INTO users (id, full_name, email, password_hash, role_id) VALUES (?, ?, ?, ?, ?)',
-            [id, full_name, email, password_hash, role_id]
+            'INSERT INTO users (id, full_name, email, password_hash, role_id, department_id, shift_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [id, full_name, email, password_hash, role_id, department_id || null, shift_id || null]
         );
         auditLog(pool, { tableName: 'users', recordId: id, action: 'INSERT', newValues: { full_name, email, role_id }, userId: req.user.id, req });
         res.status(201).json({ id, message: 'Usuario creado exitosamente.' });
@@ -37,13 +41,20 @@ const update = async (req, res, next) => {
     const conn = await pool.getConnection();
     try {
         const { id } = req.params;
-        const { full_name, role_id, is_active } = req.body;
+        const { full_name, role_id, is_active, department_id, shift_id } = req.body;
         const [old] = await conn.query('SELECT * FROM users WHERE id = ?', [id]);
         if (!old.length) return res.status(404).json({ error: 'Usuario no encontrado.' });
 
         await conn.query(
-            'UPDATE users SET full_name = ?, role_id = ?, is_active = ? WHERE id = ?',
-            [full_name ?? old[0].full_name, role_id ?? old[0].role_id, is_active ?? old[0].is_active, id]
+            'UPDATE users SET full_name = ?, role_id = ?, is_active = ?, department_id = ?, shift_id = ? WHERE id = ?',
+            [
+                full_name ?? old[0].full_name, 
+                role_id ?? old[0].role_id, 
+                is_active ?? old[0].is_active, 
+                department_id !== undefined ? department_id : old[0].department_id,
+                shift_id !== undefined ? shift_id : old[0].shift_id,
+                id
+            ]
         );
         auditLog(conn, { tableName: 'users', recordId: id, action: 'UPDATE', oldValues: old[0], newValues: req.body, userId: req.user.id, req });
         res.json({ message: 'Usuario actualizado.' });

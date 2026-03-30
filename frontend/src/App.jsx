@@ -13,6 +13,8 @@ import Users from './pages/Users';
 import Products from './pages/Products';
 import MeasurementUnits from './pages/MeasurementUnits';
 import MaterialCategories from './pages/MaterialCategories';
+import WorkQueue from './pages/WorkQueue';
+import Planning from './pages/Planning';
 
 export default function App() {
   return (
@@ -22,6 +24,8 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<PrivateRoute><AppLayout><Dashboard /></AppLayout></PrivateRoute>} />
+          <Route path="/work-queue" element={<PrivateRoute><AppLayout><WorkQueue /></AppLayout></PrivateRoute>} />
+          <Route path="/planning" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR', 'VENTAS']}><AppLayout><Planning /></AppLayout></PrivateRoute>} />
           <Route path="/production" element={<PrivateRoute><AppLayout><Production /></AppLayout></PrivateRoute>} />
           <Route path="/inventory" element={<PrivateRoute><AppLayout><Inventory /></AppLayout></PrivateRoute>} />
           <Route path="/clients" element={<PrivateRoute><AppLayout><Clients /></AppLayout></PrivateRoute>} />

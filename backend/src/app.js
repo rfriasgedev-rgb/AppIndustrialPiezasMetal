@@ -15,6 +15,8 @@ const productsRoutes = require('./routes/products.routes');
 const unitsRoutes = require('./routes/units.routes');
 const categoriesRoutes = require('./routes/categories.routes');
 const requisitionsRoutes = require('./routes/requisitions.routes');
+const workflowRoutes = require('./routes/workflow.routes');
+const planningRoutes = require('./routes/planning.routes');
 const { errorHandler } = require('./middlewares/error.middleware');
 const path = require('path');
 
@@ -70,6 +72,8 @@ app.use('/api/products', productsRoutes);
 app.use('/api/units', unitsRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/requisitions', requisitionsRoutes);
+app.use('/api/workflow', workflowRoutes);
+app.use('/api/planning', planningRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {

@@ -4,6 +4,7 @@ const { authenticate, authorize } = require('../middlewares/auth.middleware');
 
 router.use(authenticate);
 router.get('/', ctrl.getAll);
+router.get('/queue/:stage', ctrl.getQueue);
 router.get('/:id', ctrl.getById);
 router.post('/', authorize('ADMIN', 'SUPERVISOR', 'VENTAS'), ctrl.create);
 router.put('/:id/advance', authorize('ADMIN', 'SUPERVISOR', 'OPERADOR'), ctrl.advanceStage);

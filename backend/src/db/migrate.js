@@ -40,6 +40,25 @@ async function migrate() {
             await connection.query(patch2Sql);
         }
 
+        // 4. Ejecutar parche de flujo de trabajo (departamentos, turnos, etapas)
+        const patch3Path = path.join(__dirname, 'schema_workflow_patch.sql');
+        if (fs.existsSync(patch3Path)) {
+            const patch3Sql = fs.readFileSync(patch3Path, 'utf8');
+            console.log('Ejecutando schema_workflow_patch.sql...');
+            // Dividir sentencias ALTER TABLE que fallarían en múltiple statements en algunos casos
+            // o ejecutarlas normalmente si multipleStatements está habilitado
+            try {
+                await connection.query(patch3Sql);
+            } catch (err) {
+                 // Si falla por columna duplicada, lo ignoramos, significa que ya corrió
+                 if(err.code === 'ER_DUP_FIELDNAME') {
+                    console.log('Las columnas de workflow ya existen, continuando...');
+                 } else {
+                    throw err;
+                 }
+            }
+        }
+
         console.log('✅ Migraciones completadas exitosamente.');
         return true;
     } catch (error) {

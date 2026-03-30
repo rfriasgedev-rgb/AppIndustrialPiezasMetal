@@ -4,13 +4,15 @@ const { auditLog } = require('../services/audit.service');
 
 // Estado de máquina finita para el flujo de producción por PIEZA
 const TRANSITIONS = {
+    DESIGN: ['PENDING_MATERIAL', 'CANCELLED'],
     PENDING_MATERIAL: ['CUTTING', 'CANCELLED'],
     CUTTING: ['BENDING', 'CANCELLED'],
-    BENDING: ['ASSEMBLY', 'CLEANING'],  // ASSEMBLY solo si requires_assembly = true
-    ASSEMBLY: ['CLEANING', 'CANCELLED'],
+    BENDING: ['ASSEMBLY', 'WELDING', 'CLEANING', 'CANCELLED'],  // ASSEMBLY o WELDING dependiendo de la pieza
+    ASSEMBLY: ['WELDING', 'CLEANING', 'CANCELLED'],
+    WELDING: ['CLEANING', 'CANCELLED'],
     CLEANING: ['PAINTING', 'CANCELLED'],
     PAINTING: ['QUALITY_CHECK', 'CANCELLED'],
-    QUALITY_CHECK: ['READY', 'CUTTING'],  // puede regresar a re-proceso
+    QUALITY_CHECK: ['READY', 'CUTTING', 'PAINTING'],  // puede regresar a re-proceso
     READY: [],
     CANCELLED: [],
 };
@@ -102,16 +104,18 @@ const create = async (req, res, next) => {
         // 2. Insertar Detalles (Items) iterativamente
         for (const item of items) {
             const detailId = uuidv4();
+            const initialStage = item.is_new ? 'DESIGN' : 'PENDING_MATERIAL';
+            
             await conn.query(
-                `INSERT INTO production_order_details (id, order_id, product_id, quantity, requires_assembly, notes) 
-                 VALUES (?,?,?,?,?,?)`,
-                [detailId, id, item.product_id, item.quantity || 1, item.requires_assembly ? 1 : 0, item.notes || '']
+                `INSERT INTO production_order_details (id, order_id, product_id, quantity, requires_assembly, notes, stage) 
+                 VALUES (?,?,?,?,?,?,?)`,
+                [detailId, id, item.product_id, item.quantity || 1, item.requires_assembly ? 1 : 0, item.notes || '', initialStage]
             );
 
             // 3. Log de Etapa Inicial por Pieza
             await conn.query(
                 `INSERT INTO production_stage_log (id, order_detail_id, from_status, to_status, notes, performed_by) VALUES (?,?,?,?,?,?)`,
-                [uuidv4(), detailId, null, 'PENDING_MATERIAL', 'Pieza agregada a la orden', req.user.id]
+                [uuidv4(), detailId, null, initialStage, 'Pieza agregada a la orden', req.user.id]
             );
         }
 
@@ -226,4 +230,23 @@ const remove = async (req, res, next) => {
     }
 };
 
-module.exports = { getAll, getById, create, advanceStage, update, remove };
+// GET /production/queue/:stage - Obtener ítems enológicos en una etapa específica
+const getQueue = async (req, res, next) => {
+    try {
+        const { stage } = req.params;
+        const [items] = await pool.query(
+            `SELECT pod.*, po.order_number, po.priority, po.created_at as order_date, pc.name as product_name, c.company_name as client_name,
+             (SELECT psl.stage_started_at FROM production_stage_log psl WHERE psl.order_detail_id = pod.id AND psl.to_status = pod.stage ORDER BY psl.stage_started_at DESC LIMIT 1) as stage_entered_at
+             FROM production_order_details pod
+             JOIN production_orders po ON pod.order_id = po.id
+             JOIN product_catalog pc ON pod.product_id = pc.id
+             JOIN clients c ON po.client_id = c.id
+             WHERE pod.stage = ?
+             ORDER BY FIELD(po.priority,"URGENT","HIGH","NORMAL","LOW"), po.created_at ASC`,
+            [stage.toUpperCase()]
+        );
+        res.json(items);
+    } catch (err) { next(err); }
+};
+
+module.exports = { getAll, getById, create, advanceStage, update, remove, getQueue };

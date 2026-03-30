@@ -12,6 +12,11 @@ const getStats = async (req, res, next) => {
         const [ordersByStatus] = await pool.query(
             `SELECT status, COUNT(*) as count FROM production_orders GROUP BY status`
         );
+        
+        // [NUEVO] - Breakdown por Etapas de Piezas Individuales (Work Queue)
+        const [itemsByStage] = await pool.query(
+            `SELECT stage, COUNT(*) as count FROM production_order_details GROUP BY stage`
+        );
         const [[inventoryAlerts]] = await pool.query(
             `SELECT COUNT(*) as low_stock FROM inventory_items WHERE quantity_available <= reorder_point AND is_active = 1`
         );
@@ -40,6 +45,7 @@ const getStats = async (req, res, next) => {
         res.json({
             orders: ordersStats,
             ordersByStatus,
+            itemsByStage,
             inventoryAlerts: inventoryAlerts.low_stock,
             inventoryTotalItems: inventoryStats.total_items,
             inventoryTotalValue: inventoryStats.total_value || 0,

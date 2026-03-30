@@ -6,44 +6,28 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Le
 
 const STATUS_LABELS = {
     DRAFT: 'Borrador', PENDING_MATERIAL: 'Esperando Material', CUTTING: 'Corte',
-    BENDING: 'Doblado', ASSEMBLY: 'Ensamblaje', CLEANING: 'Limpieza',
+    BENDING: 'Doblado', ASSEMBLY: 'Ensamblaje', WELDING: 'Soldadura', CLEANING: 'Limpieza',
     PAINTING: 'Pintura', QUALITY_CHECK: 'Control Calidad', READY_FOR_DELIVERY: 'Listo p/Entrega',
-    DELIVERED: 'Entregado', CANCELLED: 'Cancelado',
+    DELIVERED: 'Entregado', CANCELLED: 'Cancelado', DESIGN: 'Diseño', READY: 'Lista (Pieza)'
 };
 const STATUS_COLORS = {
     DRAFT: '#6c757d', PENDING_MATERIAL: '#fd7e14', CUTTING: '#007bff',
-    BENDING: '#17a2b8', ASSEMBLY: '#6f42c1', CLEANING: '#20c997',
+    BENDING: '#17a2b8', ASSEMBLY: '#6f42c1', WELDING: '#fd7e14', CLEANING: '#20c997',
     PAINTING: '#e94560', QUALITY_CHECK: '#ffc107', READY_FOR_DELIVERY: '#28a745',
-    DELIVERED: '#155724', CANCELLED: '#dc3545',
+    DELIVERED: '#155724', CANCELLED: '#dc3545', DESIGN: '#6610f2', READY: '#28a745'
 };
 
 const StatCard = ({ icon, value, label, color }) => (
     <div className="col-lg-3 col-sm-6 mb-4 d-flex align-items-stretch">
-        <div
-            className="small-box stat-card-hover w-100"
-            style={{
-                borderRadius: '16px',
-                background: color,
-                color: '#fff',
-                boxShadow: `0 8px 25px ${color}66`,
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease'
-            }}
-        >
-            <div className="inner" style={{ padding: '20px', position: 'relative', zIndex: 2 }}>
-                <h3 style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0 }}>{value}</h3>
-                <p style={{ fontSize: '1rem', fontWeight: 500, opacity: 0.9 }}>{label}</p>
-            </div>
-            <div className="icon" style={{
-                position: 'absolute',
-                right: '15px',
-                top: '10px',
-                fontSize: '4.5rem',
-                color: 'rgba(255,255,255,0.2)',
-                zIndex: 1
-            }}>
-                <i className={icon}></i>
+        <div className="card w-100 stat-card-hover" style={{ borderLeft: `4px solid ${color}` }}>
+            <div className="card-body d-flex align-items-center p-3">
+                <div className="mr-3 rounded p-3 d-flex align-items-center justify-content-center" style={{ backgroundColor: '#f8fafc', color: color, width: '60px', height: '60px' }}>
+                    <i className={`${icon} fa-2x`}></i>
+                </div>
+                <div>
+                    <h3 className="mb-0 font-weight-bold" style={{ fontSize: '1.8rem', color: '#0f172a', letterSpacing: '-0.5px' }}>{value}</h3>
+                    <p className="mb-0 text-muted font-weight-medium" style={{ fontSize: '0.9rem' }}>{label}</p>
+                </div>
             </div>
         </div>
     </div>
@@ -60,7 +44,7 @@ export default function Dashboard() {
     if (loading) return <div className="text-center pt-5"><i className="fas fa-spinner fa-spin fa-3x text-secondary"></i></div>;
     if (!stats) return <div className="alert alert-danger">Error al cargar datos.</div>;
 
-    const { orders, ordersByStatus, inventoryAlerts, inventoryTotalItems, inventoryTotalValue, criticalMaterials, totalClients, recentOrders } = stats;
+    const { orders, ordersByStatus, itemsByStage, inventoryAlerts, inventoryTotalItems, inventoryTotalValue, criticalMaterials, totalClients, recentOrders } = stats;
 
     // Configuración del Doughnut Chart
     const doughnutData = {
@@ -126,9 +110,9 @@ export default function Dashboard() {
             <div className="row mt-3">
                 {/* Gráfico de Barras: Top Materiales Críticos */}
                 <div className="col-lg-6 mb-4">
-                    <div className="card h-100" style={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-                        <div className="card-header pb-0" style={{ background: '#fff', borderBottom: 'none', borderRadius: '16px 16px 0 0' }}>
-                            <h3 className="card-title font-weight-bold" style={{ color: '#16213e' }}>
+                    <div className="card h-100">
+                        <div className="card-header pb-0 border-0 pt-3 bg-transparent">
+                            <h3 className="card-title font-weight-bold" style={{ color: '#0f172a' }}>
                                 <i className="fas fa-chart-bar mr-2 text-danger"></i>Stock Crítico (Reabastecer)
                             </h3>
                         </div>
@@ -144,11 +128,47 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                {/* NUEVO: Pipeline de Producción (Items) */}
+                <div className="col-lg-12 mb-4">
+                    <div className="card h-100">
+                        <div className="card-header pb-0 border-0 pt-3 bg-transparent">
+                            <h3 className="card-title font-weight-bold" style={{ color: '#0f172a' }}>
+                                <i className="fas fa-project-diagram mr-2 text-primary"></i>Pipeline de Piezas en Producción
+                            </h3>
+                        </div>
+                        <div className="card-body">
+                            <div className="d-flex justify-content-between text-center" style={{ overflowX: 'auto', paddingBottom: '10px' }}>
+                                {['DESIGN', 'PENDING_MATERIAL', 'CUTTING', 'BENDING', 'ASSEMBLY', 'WELDING', 'CLEANING', 'PAINTING', 'QUALITY_CHECK', 'READY'].map((st, idx, arr) => {
+                                    const qty = itemsByStage?.find(i => i.stage === st)?.count || 0;
+                                    const color = STATUS_COLORS[st];
+                                    return (
+                                        <div key={st} className="d-flex align-items-center mb-2 mx-1">
+                                            <div style={{ minWidth: '85px' }}>
+                                                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: qty > 0 ? color : '#ccc' }}>
+                                                    {qty}
+                                                </div>
+                                                <small style={{ display: 'block', lineHeight: '1.1', color: '#666', fontWeight: 600, marginTop: '4px' }}>
+                                                    {STATUS_LABELS[st]}
+                                                </small>
+                                            </div>
+                                            {idx < arr.length - 1 && (
+                                                <div className="mx-2 text-muted" style={{ fontSize: '1.2rem', opacity: 0.5 }}>
+                                                    <i className="fas fa-chevron-right"></i>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Doughnut: Órdenes por estado */}
                 <div className="col-lg-6 mb-4">
-                    <div className="card h-100" style={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-                        <div className="card-header pb-0" style={{ background: '#fff', borderBottom: 'none', borderRadius: '16px 16px 0 0' }}>
-                            <h3 className="card-title font-weight-bold" style={{ color: '#16213e' }}>
+                    <div className="card h-100">
+                        <div className="card-header pb-0 border-0 pt-3 bg-transparent">
+                            <h3 className="card-title font-weight-bold" style={{ color: '#0f172a' }}>
                                 <i className="fas fa-chart-pie mr-2 text-primary"></i>Distribución de Órdenes
                             </h3>
                         </div>
@@ -169,9 +189,9 @@ export default function Dashboard() {
             <div className="row">
                 {/* Órdenes Recientes Mejoradas */}
                 <div className="col-lg-12">
-                    <div className="card" style={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-                        <div className="card-header" style={{ background: '#1a1a2e', color: '#fff', borderRadius: '16px 16px 0 0' }}>
-                            <h3 className="card-title"><i className="fas fa-stream mr-2 text-danger"></i>Últimas Órdenes Generadas</h3>
+                    <div className="card">
+                        <div className="card-header border-0 pt-3 bg-transparent">
+                            <h3 className="card-title font-weight-bold" style={{ color: '#0f172a' }}><i className="fas fa-stream mr-2 text-danger"></i>Últimas Órdenes Generadas</h3>
                         </div>
                         <div className="card-body p-0">
                             <ul className="list-group list-group-flush">
