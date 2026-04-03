@@ -22,7 +22,7 @@ const login = async (req, res, next) => {
 
         const token = jwt.sign(
             { id: user.id, role: user.role, email: user.email },
-            process.env.JWT_SECRET,
+            process.env.JWT_SECRET || 'metal_erp_default_secret_key_123!',
             { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
         );
 

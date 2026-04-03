@@ -64,7 +64,11 @@ export default function Login() {
                 } else {
                     attemptSucceeded = true;
                     clearTimeout(slowResponseTimeout);
-                    const msg = err.response?.data?.error || (isSleepError ? 'El servidor tardó demasiado en iniciar.' : 'Credenciales inválidas o error de conexión.');
+                    
+                    let errorData = err.response?.data?.error;
+                    let msg = typeof errorData === 'object' && errorData !== null ? errorData.message : errorData;
+                    msg = msg || (isSleepError ? 'El servidor tardó demasiado en iniciar.' : 'Credenciales inválidas o error de conexión.');
+                    
                     toast.error(msg);
                     setErrorMsg(msg);
                     setLoading(false);
