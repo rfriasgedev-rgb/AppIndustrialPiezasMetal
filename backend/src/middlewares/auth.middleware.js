@@ -14,7 +14,7 @@ const authenticate = async (req, res, next) => {
             return res.status(401).json({ error: 'Token de autenticación requerido.' });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'metal_erp_default_secret_key_123!');
         const [rows] = await pool.query(
             'SELECT u.id, u.full_name, u.email, u.is_active, r.name AS role FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?',
             [decoded.id]

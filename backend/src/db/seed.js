@@ -108,6 +108,26 @@ async function seed() {
         }
         console.log('✅ Catálogo de productos (10 piezas de prueba) creados/verificados.');
 
+        // Crear Órdenes de Producción de prueba para popular el Dashboard
+        const testOrders = [
+            { id: uuidv4(), order_number: 'ORD-0001', client_id: testClients[0].id, status: 'IN_PROGRESS', priority: 'HIGH', created_by: adminId, notes: 'Fabricación urgente para ensamblaje.' },
+            { id: uuidv4(), order_number: 'ORD-0002', client_id: testClients[1].id, status: 'PENDING_MATERIAL', priority: 'NORMAL', created_by: adminId, notes: 'Esperando láminas de magnesio.' },
+            { id: uuidv4(), order_number: 'ORD-0003', client_id: testClients[2].id, status: 'DRAFT', priority: 'LOW', created_by: adminId, notes: 'Esquema borrador inicial.' }
+        ];
+
+        for (let i = 0; i < testOrders.length; i++) {
+            const o = testOrders[i];
+            await pool.query(
+                `INSERT IGNORE INTO production_orders (id, order_number, client_id, status, priority, created_by, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [o.id, o.order_number, o.client_id, o.status, o.priority, o.created_by, o.notes]
+            );
+            await pool.query(
+                `INSERT IGNORE INTO production_order_details (id, order_id, product_id, quantity, stage) VALUES (?, ?, ?, ?, ?)`,
+                [uuidv4(), o.id, testProducts[i].id, 5, o.status === 'IN_PROGRESS' ? 'CUTTING' : 'PENDING_MATERIAL']
+            );
+        }
+        console.log('✅ Órdenes de Producción de prueba creadas.');
+
         console.log('\n🚀 Seed completado. Ya puedes iniciar el servidor.');
         return true;
     } catch (err) {
