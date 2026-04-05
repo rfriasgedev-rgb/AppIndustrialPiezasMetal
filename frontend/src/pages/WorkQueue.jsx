@@ -139,11 +139,7 @@ export default function WorkQueue() {
                                                     Pasar a {STAGES[next]} <i className="fas fa-arrow-right ml-1"></i>
                                                 </button>
                                             ))}
-                                            {selectedStage !== 'CANCELLED' && selectedStage !== 'READY' && (
-                                                <button className="btn btn-sm btn-outline-danger mb-2" onClick={() => handleAdvance(item, 'CANCELLED')}>
-                                                    Cancelar/Merma
-                                                </button>
-                                            )}
+                                            {/* El botón Cancelar/Merma ha sido retirado de esta vista */}
                                         </div>
                                     </div>
                                 </div>
