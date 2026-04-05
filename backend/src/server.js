@@ -22,13 +22,6 @@ async function attemptDbConnection(retries = 15, delay = 5000) {
         try {
             await testConnection();
             console.log('✅ [DB] Base de datos conectada y lista.');
-            
-            // Correr migraciones y seeds ahora que la DB conectó
-            const migrateSuccess = await migrate();
-            if (migrateSuccess) {
-                await seed();
-            }
-
             global.isDbReady = true;
             return;
         } catch (err) {
@@ -40,5 +33,5 @@ async function attemptDbConnection(retries = 15, delay = 5000) {
         }
     }
     console.error('❌ [DB] No se pudo conectar a MySQL. Verifica que el servicio esté activo.');
-    console.error('   Las rutas de la API devolverán error 503 permanentemente.');
+    global.isDbReady = false;
 }

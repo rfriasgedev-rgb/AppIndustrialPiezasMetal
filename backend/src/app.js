@@ -30,7 +30,7 @@ const app = express();
 // Health Check (Always available and at the very top for Railway)
 app.get('/api/health', (req, res) => {
     console.log('💓 Railway Healthcheck hit!');
-    res.status(200).send('OK');
+    res.json({ status: 'OK', timestamp: new Date().toISOString(), db: global.isDbReady });
 });
 
 // Security & Utility Middleware
