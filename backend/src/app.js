@@ -17,6 +17,11 @@ const categoriesRoutes = require('./routes/categories.routes');
 const requisitionsRoutes = require('./routes/requisitions.routes');
 const workflowRoutes = require('./routes/workflow.routes');
 const planningRoutes = require('./routes/planning.routes');
+const departmentsRoutes = require('./routes/departments.routes');
+const schedulesRoutes = require('./routes/schedules.routes');
+const employeeRolesRoutes = require('./routes/employee_roles.routes');
+const employeesRoutes = require('./routes/employees.routes');
+const productionLinesRoutes = require('./routes/production_lines.routes');
 const { errorHandler } = require('./middlewares/error.middleware');
 const path = require('path');
 
@@ -74,6 +79,11 @@ app.use('/api/categories', categoriesRoutes);
 app.use('/api/requisitions', requisitionsRoutes);
 app.use('/api/workflow', workflowRoutes);
 app.use('/api/planning', planningRoutes);
+app.use('/api/departments', departmentsRoutes);
+app.use('/api/schedules', schedulesRoutes);
+app.use('/api/employee-roles', employeeRolesRoutes);
+app.use('/api/employees', employeesRoutes);
+app.use('/api/production-lines', productionLinesRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {

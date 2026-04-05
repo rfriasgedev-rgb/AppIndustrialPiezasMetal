@@ -63,6 +63,14 @@ async function migrate() {
             }
         }
 
+        // 5. Ejecutar parche de HR y Líneas de Producción
+        const patch4Path = path.join(__dirname, 'schema_hr_patch.sql');
+        if (fs.existsSync(patch4Path)) {
+            const patch4Sql = fs.readFileSync(patch4Path, 'utf8');
+            console.log('Ejecutando schema_hr_patch.sql...');
+            await connection.query(patch4Sql);
+        }
+
         console.log('✅ Migraciones completadas exitosamente.');
         return true;
     } catch (error) {

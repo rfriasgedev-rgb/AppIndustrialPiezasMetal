@@ -82,10 +82,13 @@ export default function AppLayout({ children }) {
                             })}
 
                             {/* Configurations Submenu - Only ADMIN */}
-                            {hasRole('ADMIN') && (
-                                <li className={`nav-item has-treeview ${location.pathname.startsWith('/units') || location.pathname.startsWith('/categories') ? 'menu-open' : ''}`}>
-                                    <a href="#" className={`nav-link ${location.pathname.startsWith('/units') || location.pathname.startsWith('/categories') ? 'active' : ''}`} style={location.pathname.startsWith('/units') || location.pathname.startsWith('/categories') ? { background: '#eef2ff', color: '#4338ca', fontWeight: 600, borderRadius: '8px', margin: '0 8px' } : { color: '#64748b', margin: '0 8px' }}>
-                                        <i className="nav-icon fas fa-cogs" style={location.pathname.startsWith('/units') || location.pathname.startsWith('/categories') ? { color: '#4f46e5'} : {}}></i>
+                            {hasRole('ADMIN') && (() => {
+                                const configRoutes = ['/categories', '/units', '/departments', '/schedules', '/employee-roles', '/employees', '/production-lines'];
+                                const isConfigOpen = configRoutes.some(path => location.pathname.startsWith(path));
+                                return (
+                                <li className={`nav-item has-treeview ${isConfigOpen ? 'menu-open' : ''}`}>
+                                    <a href="#" className={`nav-link ${isConfigOpen ? 'active' : ''}`} style={isConfigOpen ? { background: '#eef2ff', color: '#4338ca', fontWeight: 600, borderRadius: '8px', margin: '0 8px' } : { color: '#64748b', margin: '0 8px' }}>
+                                        <i className="nav-icon fas fa-cogs" style={isConfigOpen ? { color: '#4f46e5'} : {}}></i>
                                         <p>
                                             Configuraciones
                                             <i className="right fas fa-angle-left"></i>
@@ -104,9 +107,40 @@ export default function AppLayout({ children }) {
                                                 <p>Unidades de Medida</p>
                                             </Link>
                                         </li>
+                                        <li className="nav-item">
+                                            <Link to="/departments" className={`nav-link ${location.pathname === '/departments' ? 'active' : ''}`} style={location.pathname === '/departments' ? { color: '#4f46e5', fontWeight: 600 } : { color: '#64748b' }}>
+                                                <i className="fas fa-circle nav-icon" style={{ fontSize: '0.5rem', marginTop: '4px' }}></i>
+                                                <p>Departamentos</p>
+                                            </Link>
+                                        </li>
+                                        <li className="nav-item">
+                                            <Link to="/schedules" className={`nav-link ${location.pathname === '/schedules' ? 'active' : ''}`} style={location.pathname === '/schedules' ? { color: '#4f46e5', fontWeight: 600 } : { color: '#64748b' }}>
+                                                <i className="fas fa-circle nav-icon" style={{ fontSize: '0.5rem', marginTop: '4px' }}></i>
+                                                <p>Horarios</p>
+                                            </Link>
+                                        </li>
+                                        <li className="nav-item">
+                                            <Link to="/employee-roles" className={`nav-link ${location.pathname === '/employee-roles' ? 'active' : ''}`} style={location.pathname === '/employee-roles' ? { color: '#4f46e5', fontWeight: 600 } : { color: '#64748b' }}>
+                                                <i className="fas fa-circle nav-icon" style={{ fontSize: '0.5rem', marginTop: '4px' }}></i>
+                                                <p>Roles de Personal</p>
+                                            </Link>
+                                        </li>
+                                        <li className="nav-item">
+                                            <Link to="/employees" className={`nav-link ${location.pathname === '/employees' ? 'active' : ''}`} style={location.pathname === '/employees' ? { color: '#4f46e5', fontWeight: 600 } : { color: '#64748b' }}>
+                                                <i className="fas fa-circle nav-icon" style={{ fontSize: '0.5rem', marginTop: '4px' }}></i>
+                                                <p>Plantilla Empleados</p>
+                                            </Link>
+                                        </li>
+                                        <li className="nav-item">
+                                            <Link to="/production-lines" className={`nav-link ${location.pathname === '/production-lines' ? 'active' : ''}`} style={location.pathname === '/production-lines' ? { color: '#4f46e5', fontWeight: 600 } : { color: '#64748b' }}>
+                                                <i className="fas fa-circle nav-icon" style={{ fontSize: '0.5rem', marginTop: '4px' }}></i>
+                                                <p>Líneas de Producción</p>
+                                            </Link>
+                                        </li>
                                     </ul>
                                 </li>
-                            )}
+                                );
+                            })()}
                         </ul>
                     </nav>
                 </div>

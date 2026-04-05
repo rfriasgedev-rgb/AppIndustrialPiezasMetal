@@ -1,0 +1,95 @@
+const db = require('../db/connection');
+const crypto = require('crypto');
+
+exports.getAll = async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                e.*,
+                d.name as department_name,
+                s.name as shift_name,
+                s.start_time,
+                s.end_time,
+                r.name as role_name
+            FROM employees e
+            LEFT JOIN departments d ON e.department_id = d.id
+            LEFT JOIN shifts s ON e.shift_id = s.id
+            LEFT JOIN employee_roles r ON e.employee_role_id = r.id
+            ORDER BY e.created_at DESC
+        `;
+        const [rows] = await db.query(query);
+        res.json(rows);
+    } catch (error) {
+        console.error('Error fetching employees:', error);
+        res.status(500).json({ error: 'Server error fetching employees' });
+    }
+};
+
+exports.getById = async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                e.*,
+                d.name as department_name,
+                s.name as shift_name,
+                r.name as role_name
+            FROM employees e
+            LEFT JOIN departments d ON e.department_id = d.id
+            LEFT JOIN shifts s ON e.shift_id = s.id
+            LEFT JOIN employee_roles r ON e.employee_role_id = r.id
+            WHERE e.id = ?
+        `;
+        const [rows] = await db.query(query, [req.params.id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Employee not found' });
+        res.json(rows[0]);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+exports.create = async (req, res) => {
+    try {
+        const { first_name, last_name, department_id, shift_id, employee_role_id, is_active } = req.body;
+        const id = crypto.randomUUID();
+        
+        const active = is_active !== undefined ? is_active : true;
+
+        await db.query(`
+            INSERT INTO employees (id, first_name, last_name, department_id, shift_id, employee_role_id, is_active) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [id, first_name, last_name, department_id, shift_id, employee_role_id, active]);
+        
+        res.status(201).json({ id, first_name, last_name, department_id, shift_id, employee_role_id, is_active: active });
+    } catch (error) {
+        console.error('Error creating employee:', error);
+        res.status(500).json({ error: 'Server error creating employee' });
+    }
+};
+
+exports.update = async (req, res) => {
+    try {
+        const { first_name, last_name, department_id, shift_id, employee_role_id, is_active } = req.body;
+        const [result] = await db.query(`
+            UPDATE employees 
+            SET first_name = ?, last_name = ?, department_id = ?, shift_id = ?, employee_role_id = ?, is_active = ?
+            WHERE id = ?
+        `, [first_name, last_name, department_id, shift_id, employee_role_id, is_active, req.params.id]);
+        
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Employee not found' });
+        res.json({ id: req.params.id, first_name, last_name, department_id, shift_id, employee_role_id, is_active });
+    } catch (error) {
+        console.error('Error updating employee:', error);
+        res.status(500).json({ error: 'Server error updating employee' });
+    }
+};
+
+exports.delete = async (req, res) => {
+    try {
+        // Soft delete initially, if needed could be hard delete.
+        const [result] = await db.query('DELETE FROM employees WHERE id = ?', [req.params.id]);
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Employee not found' });
+        res.json({ message: 'Deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error (employee may be in use)' });
+    }
+};

@@ -15,7 +15,11 @@ import MeasurementUnits from './pages/MeasurementUnits';
 import MaterialCategories from './pages/MaterialCategories';
 import WorkQueue from './pages/WorkQueue';
 import Planning from './pages/Planning';
-
+import Departments from './pages/Departments';
+import Schedules from './pages/Schedules';
+import EmployeeRoles from './pages/EmployeeRoles';
+import Employees from './pages/Employees';
+import ProductionLines from './pages/ProductionLines';
 export default function App() {
   return (
     <AuthProvider>
@@ -32,6 +36,11 @@ export default function App() {
           <Route path="/products" element={<PrivateRoute roles={['ADMIN', 'VENTAS', 'SUPERVISOR']}><AppLayout><Products /></AppLayout></PrivateRoute>} />
           <Route path="/units" element={<PrivateRoute roles={['ADMIN']}><AppLayout><MeasurementUnits /></AppLayout></PrivateRoute>} />
           <Route path="/categories" element={<PrivateRoute roles={['ADMIN']}><AppLayout><MaterialCategories /></AppLayout></PrivateRoute>} />
+          <Route path="/departments" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR']}><AppLayout><Departments /></AppLayout></PrivateRoute>} />
+          <Route path="/schedules" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR']}><AppLayout><Schedules /></AppLayout></PrivateRoute>} />
+          <Route path="/employee-roles" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR']}><AppLayout><EmployeeRoles /></AppLayout></PrivateRoute>} />
+          <Route path="/employees" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR']}><AppLayout><Employees /></AppLayout></PrivateRoute>} />
+          <Route path="/production-lines" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR']}><AppLayout><ProductionLines /></AppLayout></PrivateRoute>} />
           <Route path="/purchases" element={<PrivateRoute roles={['ADMIN', 'ALMACENISTA', 'SUPERVISOR']}><AppLayout><Purchases /></AppLayout></PrivateRoute>} />
           <Route path="/users" element={<PrivateRoute roles={['ADMIN']}><AppLayout><Users /></AppLayout></PrivateRoute>} />
           <Route path="/unauthorized" element={
