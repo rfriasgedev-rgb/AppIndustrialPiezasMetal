@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/production_lines.controller');
-const { verifyToken, isAdminOrVentas } = require('../middlewares/auth');
+const { authenticate, authorize } = require('../middlewares/auth.middleware');
 
-router.use(verifyToken);
-router.use(isAdminOrVentas); 
+router.use(authenticate);
+router.use(authorize('ADMIN')); 
 
 router.get('/', controller.getAll);
 router.get('/:id', controller.getById);

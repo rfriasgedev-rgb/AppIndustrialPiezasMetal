@@ -27,15 +27,6 @@ const path = require('path');
 
 const app = express();
 
-// DIAGNÓSTICO: Captura inmediata de Healthcheck antes de CUALQUIER middleware
-app.use((req, res, next) => {
-    if (req.url === '/health' || req.url === '/api/health') {
-        console.log(`💓 [DIAGNOSTIC] Healthcheck hit: ${req.method} ${req.url}`);
-        return res.status(200).json({ status: 'diagnostic_ok', db: !!global.isDbReady });
-    }
-    next();
-});
-
 // Security & Utility Middleware
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',

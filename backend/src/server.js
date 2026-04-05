@@ -19,11 +19,6 @@ app.listen(PORT, HOST, () => {
     console.log(`🚀 [API] Servidor HTTP corriendo en http://${HOST}:${PORT}`);
     console.log(`📦 [Ambiente] ${process.env.NODE_ENV || 'development'}`);
     
-    // Latido de vida cada 10 segundos para ver en los logs
-    setInterval(() => {
-        console.log(`💓 [HEARTBEAT] El servidor sigue vivo y escuchando en el puerto ${PORT} - ${new Date().toISOString()}`);
-    }, 10000);
-
     // Intentar conectar a la DB después de arrancar
     attemptDbConnection();
 });
