@@ -10,7 +10,7 @@ const getPlanningStats = async (req, res, next) => {
             JOIN production_orders po ON pod.order_id = po.id
             JOIN product_catalog pc ON pod.product_id = pc.id
             WHERE po.status IN ('PENDING_MATERIAL', 'IN_PROGRESS')
-              AND pod.stage IN ('DESIGN', 'PENDING_MATERIAL', 'CUTTING')
+              AND pod.stage IN ('DESIGN', 'CUTTING')
             GROUP BY pod.product_id
             ORDER BY total_quantity DESC
             LIMIT 20

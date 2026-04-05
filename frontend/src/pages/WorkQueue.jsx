@@ -4,14 +4,13 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 
 const STAGES = {
-    DESIGN: 'Diseño', PENDING_MATERIAL: 'Esperando Material', CUTTING: 'Corte',
+    DESIGN: 'Diseño', CUTTING: 'Corte',
     BENDING: 'Doblado', ASSEMBLY: 'Ensamblaje', WELDING: 'Soldadura', CLEANING: 'Limpieza',
     PAINTING: 'Pintura', QUALITY_CHECK: 'Control Calidad', READY: 'Terminado'
 };
 
 const NEXT_AVAILABLE_STAGES = {
-    DESIGN: ['PENDING_MATERIAL'],
-    PENDING_MATERIAL: ['CUTTING'],
+    DESIGN: ['CUTTING'],
     CUTTING: ['BENDING'],
     BENDING: ['ASSEMBLY', 'WELDING', 'CLEANING'],
     ASSEMBLY: ['WELDING', 'CLEANING'],
@@ -56,6 +55,23 @@ export default function WorkQueue() {
             loadQueue(selectedStage);
         } catch (err) {
             toast.error(err.response?.data?.error || 'Error al avanzar la pieza.');
+        }
+    };
+
+    const handlePrintRequisition = async (item) => {
+        try {
+            // 1. Intentar generar o recuperar la requisición
+            const genRes = await API.post(`/requisitions/generate/${item.order_id}`);
+            const requisitionId = genRes.data.requisitionId;
+            
+            if (requisitionId) {
+                // 2. Abrir el PDF en una nueva pestaña
+                const url = `${API.defaults.baseURL}/requisitions/${requisitionId}/pdf`;
+                window.open(url, '_blank');
+                toast.info('Generando PDF de requisición...');
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.error || 'Error al generar la requisición de materiales.');
         }
     };
 
@@ -105,6 +121,15 @@ export default function WorkQueue() {
                                         
                                         <p className="mb-2 font-weight-bold text-sm">Avance a siguiente etapa:</p>
                                         <div className="d-flex flex-wrap gap-2">
+                                            {selectedStage === 'CUTTING' && (
+                                                <button 
+                                                    className="btn btn-sm btn-info mr-2 mb-2"
+                                                    onClick={() => handlePrintRequisition(item)}
+                                                    title="Generar e imprimir lista de materiales"
+                                                >
+                                                    <i className="fas fa-print mr-1"></i> Imprimir Requisición
+                                                </button>
+                                            )}
                                             {(NEXT_AVAILABLE_STAGES[selectedStage] || []).map(next => (
                                                 <button 
                                                     key={next} 
