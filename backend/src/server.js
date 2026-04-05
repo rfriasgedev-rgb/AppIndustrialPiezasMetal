@@ -8,9 +8,10 @@ const { seed } = require('./db/seed');
 
 const PORT = process.env.PORT || 3001;
 
-// Inicia el servidor HTTP aunque MySQL no esté disponible aún
-app.listen(PORT, () => {
-    console.log(`🚀 [API] Servidor HTTP corriendo en http://localhost:${PORT}`);
+// Inicia el servidor HTTP escuchando en 0.0.0.0 para compatibilidad con Railway
+const HOST = '0.0.0.0';
+app.listen(PORT, HOST, () => {
+    console.log(`🚀 [API] Servidor HTTP corriendo en http://${HOST}:${PORT}`);
     console.log(`📦 [Ambiente] ${process.env.NODE_ENV || 'development'}`);
     // Intentar conectar a la DB después de arrancar
     attemptDbConnection();

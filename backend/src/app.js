@@ -27,6 +27,12 @@ const path = require('path');
 
 const app = express();
 
+// Health Check (Always available and at the very top for Railway)
+app.get('/api/health', (req, res) => {
+    console.log('💓 Railway Healthcheck hit!');
+    res.status(200).send('OK');
+});
+
 // Security & Utility Middleware
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -54,11 +60,6 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use(express.urlencoded({ extended: true }));
 
 const { globalLimiter } = require('./middlewares/rateLimiter.middleware');
-
-// Health Check (Always available)
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date().toISOString(), db: global.isDbReady });
-});
 
 // Routes
 app.use('/api/', globalLimiter);
