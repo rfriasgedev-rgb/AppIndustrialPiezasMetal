@@ -54,9 +54,9 @@ async function migrate() {
             try {
                 await connection.query(patch3Sql);
             } catch (err) {
-                 // Si falla por columna duplicada, lo ignoramos, significa que ya corrió
-                 if(err.code === 'ER_DUP_FIELDNAME') {
-                    console.log('Las columnas de workflow ya existen, continuando...');
+                 // Si falla por columna duplicada o restricción duplicada, lo ignoramos
+                 if(err.code === 'ER_DUP_FIELDNAME' || err.code === 'ER_DUP_KEYNAME' || err.errno === 1060 || err.errno === 1061) {
+                    console.log('Las columnas o restricciones de workflow ya existen, continuando...');
                  } else {
                     throw err;
                  }
@@ -68,7 +68,16 @@ async function migrate() {
         if (fs.existsSync(patch4Path)) {
             const patch4Sql = fs.readFileSync(patch4Path, 'utf8');
             console.log('Ejecutando schema_hr_patch.sql...');
-            await connection.query(patch4Sql);
+            try {
+                await connection.query(patch4Sql);
+            } catch (err) {
+                // Manejar errores de inserción duplicada en patches que ya corrieron parcialmente
+                if (err.code === 'ER_DUP_ENTRY' || err.errno === 1062) {
+                    console.log('Datos de HR ya insertados previamente o parche ya aplicado parcialmente.');
+                } else {
+                    throw err;
+                }
+            }
         }
 
         console.log('✅ Migraciones completadas exitosamente.');
