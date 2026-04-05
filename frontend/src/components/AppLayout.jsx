@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -18,6 +19,15 @@ export default function AppLayout({ children }) {
     const { user, logout, hasRole } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
+    
+    const [configMenuOpen, setConfigMenuOpen] = useState(false);
+
+    useEffect(() => {
+        const configRoutes = ['/categories', '/units', '/departments', '/schedules', '/employee-roles', '/employees', '/production-lines'];
+        if (configRoutes.some(path => location.pathname.startsWith(path))) {
+            setConfigMenuOpen(true);
+        }
+    }, [location.pathname]);
 
     const handleLogout = () => {
         logout();
@@ -82,19 +92,19 @@ export default function AppLayout({ children }) {
                             })}
 
                             {/* Configurations Submenu - Only ADMIN */}
-                            {hasRole('ADMIN') && (() => {
-                                const configRoutes = ['/categories', '/units', '/departments', '/schedules', '/employee-roles', '/employees', '/production-lines'];
-                                const isConfigOpen = configRoutes.some(path => location.pathname.startsWith(path));
-                                return (
-                                <li className={`nav-item has-treeview ${isConfigOpen ? 'menu-open' : ''}`}>
-                                    <a href="#" className={`nav-link ${isConfigOpen ? 'active' : ''}`} style={isConfigOpen ? { background: '#eef2ff', color: '#4338ca', fontWeight: 600, borderRadius: '8px', margin: '0 8px' } : { color: '#64748b', margin: '0 8px' }}>
-                                        <i className="nav-icon fas fa-cogs" style={isConfigOpen ? { color: '#4f46e5'} : {}}></i>
+                            {hasRole('ADMIN') && (
+                                <li className={`nav-item has-treeview ${configMenuOpen ? 'menu-open' : ''}`}>
+                                    <a href="#" className={`nav-link ${configMenuOpen ? 'active' : ''}`} 
+                                       style={configMenuOpen ? { background: '#eef2ff', color: '#4338ca', fontWeight: 600, borderRadius: '8px', margin: '0 8px' } : { color: '#64748b', margin: '0 8px' }}
+                                       onClick={(e) => { e.preventDefault(); setConfigMenuOpen(!configMenuOpen); }}
+                                    >
+                                        <i className="nav-icon fas fa-cogs" style={configMenuOpen ? { color: '#4f46e5'} : {}}></i>
                                         <p>
                                             Configuraciones
                                             <i className="right fas fa-angle-left"></i>
                                         </p>
                                     </a>
-                                    <ul className="nav nav-treeview ml-2">
+                                    <ul className="nav nav-treeview ml-2" style={{ display: configMenuOpen ? 'block' : 'none' }}>
                                         <li className="nav-item">
                                             <Link to="/categories" className={`nav-link ${location.pathname === '/categories' ? 'active' : ''}`} style={location.pathname === '/categories' ? { color: '#4f46e5', fontWeight: 600 } : { color: '#64748b' }}>
                                                 <i className="fas fa-circle nav-icon" style={{ fontSize: '0.5rem', marginTop: '4px' }}></i>
@@ -139,8 +149,7 @@ export default function AppLayout({ children }) {
                                         </li>
                                     </ul>
                                 </li>
-                                );
-                            })()}
+                            )}
                         </ul>
                     </nav>
                 </div>
