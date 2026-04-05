@@ -127,6 +127,74 @@ async function seed() {
             );
         }
         console.log('✅ Órdenes de Producción de prueba creadas.');
+        
+        // --- NUEVA SECCIÓN: RECURSOS HUMANOS Y PRODUCCIÓN ---
+        console.log('🌱 Iniciando seed de RRHH y Líneas de Producción...');
+
+        // 1. Departamentos (si no existen)
+        const depts = [
+            { id: uuidv4(), name: 'Producción A', description: 'Planta principal de piezas metálicas' },
+            { id: uuidv4(), name: 'Calidad', description: 'Inspección y control de acabados' },
+            { id: uuidv4(), name: 'Mantenimiento', description: 'Cuidado preventivo de maquinaria' }
+        ];
+        for (const d of depts) {
+            await pool.query('INSERT IGNORE INTO departments (id, name, description) VALUES (?, ?, ?)', [d.id, d.name, d.description]);
+        }
+        
+        const [deptRows] = await pool.query('SELECT id, name FROM departments');
+        const deptMap = Object.fromEntries(deptRows.map(r => [r.name, r.id]));
+
+        // 2. Horarios / Turnos
+        const shifts = [
+            { id: uuidv4(), name: 'Turno Matutino', start: '06:00:00', end: '14:00:00', desc: 'Turno principal de mañana' },
+            { id: uuidv4(), name: 'Turno Vespertino', start: '14:00:00', end: '22:00:00', desc: 'Turno de tarde' },
+            { id: uuidv4(), name: 'Turno Nocturno', start: '22:00:00', end: '06:00:00', desc: 'Operación de guardia' }
+        ];
+        for (const s of shifts) {
+            await pool.query('INSERT IGNORE INTO shifts (id, name, start_time, end_time, description) VALUES (?, ?, ?, ?, ?)', [s.id, s.name, s.start, s.end, s.desc]);
+        }
+
+        const [shiftRows] = await pool.query('SELECT id, name FROM shifts');
+        const shiftMap = Object.fromEntries(shiftRows.map(r => [r.name, r.id]));
+
+        // 3. Roles de Personal
+        const empRoles = [
+            { id: uuidv4(), name: 'Operador de Prensa', desc: 'Manejo de prensas hidráulicas', salary: 1200.00 },
+            { id: uuidv4(), name: 'Supervisor de Línea', desc: 'Gestión de equipo y metas', salary: 1800.00 },
+            { id: uuidv4(), name: 'Inspector de Calidad', desc: 'Validación de medidas y tolerancias', salary: 1400.00 }
+        ];
+        for (const r of empRoles) {
+            await pool.query('INSERT IGNORE INTO employee_roles (id, name, description, base_salary) VALUES (?, ?, ?, ?)', [r.id, r.name, r.desc, r.salary]);
+        }
+
+        const [roleRows] = await pool.query('SELECT id, name FROM employee_roles');
+        const roleMap = Object.fromEntries(roleRows.map(r => [r.name, r.id]));
+
+        // 4. Plantilla de Empleados
+        const employees = [
+            { id: uuidv4(), name: 'Juan Pérez', email: 'juan.perez@empresa.com', tel: '555-1010', dept: 'Producción A', shift: 'Turno Matutino', role: 'Supervisor de Línea' },
+            { id: uuidv4(), name: 'Ana García', email: 'ana.garcia@empresa.com', tel: '555-2020', dept: 'Producción A', shift: 'Turno Matutino', role: 'Operador de Prensa' },
+            { id: uuidv4(), name: 'Luis Rodríguez', email: 'luis.rodriguez@empresa.com', tel: '555-3030', dept: 'Producción A', shift: 'Turno Matutino', role: 'Operador de Prensa' }
+        ];
+        for (const e of employees) {
+            await pool.query(
+                'INSERT IGNORE INTO employees (id, full_name, email, phone, department_id, shift_id, role_id, hire_date) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
+                [e.id, e.name, e.email, e.tel, deptMap[e.dept], shiftMap[e.shift], roleMap[e.role]]
+            );
+        }
+
+        const [empRows] = await pool.query('SELECT id, full_name FROM employees');
+        const empMap = Object.fromEntries(empRows.map(r => [r.full_name, r.id]));
+
+        // 5. Líneas de Producción
+        if (empMap['Juan Pérez']) {
+            await pool.query(
+                'INSERT IGNORE INTO production_lines (id, name, description, leader_id) VALUES (?, ?, ?, ?)',
+                [uuidv4(), 'Línea de Estampado 01', 'Línea principal de piezas de carrocería', empMap['Juan Pérez']]
+            );
+        }
+
+        console.log('✅ Datos de RRHH y Producción inyectados correctamente.');
 
         console.log('\n🚀 Seed completado. Ya puedes iniciar el servidor.');
         return true;
