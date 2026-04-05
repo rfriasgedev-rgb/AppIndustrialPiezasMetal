@@ -1,4 +1,5 @@
 const db = require('../db/connection');
+const { v4: uuidv4 } = require('uuid');
 
 exports.getAll = async (req, res) => {
     try {
@@ -11,10 +12,10 @@ exports.getAll = async (req, res) => {
             LEFT JOIN employees e ON pl.leader_employee_id = e.id
             ORDER BY pl.name
         `;
-        const [rows] = await db.query(query);
+        const [rows] = await db.pool.query(query);
         
         // Populate with line employees
-        const [lineEmployees] = await db.query(`
+        const [lineEmployees] = await db.pool.query(`
             SELECT ple.line_id, ple.employee_id, e.first_name, e.last_name, er.name as role_name
             FROM production_line_employees ple
             JOIN employees e ON ple.employee_id = e.id
@@ -46,13 +47,13 @@ exports.getById = async (req, res) => {
             LEFT JOIN employees e ON pl.leader_employee_id = e.id
             WHERE pl.id = ?
         `;
-        const [rows] = await db.query(query, [req.params.id]);
+        const [rows] = await db.pool.query(query, [req.params.id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Production line not found' });
         
         const line = rows[0];
         
         // fetch employees
-        const [employees] = await db.query(`
+        const [employees] = await db.pool.query(`
             SELECT ple.employee_id, e.first_name, e.last_name, er.name as role_name
             FROM production_line_employees ple
             JOIN employees e ON ple.employee_id = e.id
@@ -73,17 +74,16 @@ exports.create = async (req, res) => {
     try {
         const { name, description, leader_employee_id, employee_ids = [] } = req.body;
         
-        connection = await db.getConnection();
+        connection = await db.pool.getConnection();
         await connection.beginTransaction();
         
+        const lineId = uuidv4();
         const leaderId = leader_employee_id || null;
 
-        const [result] = await connection.query(`
-            INSERT INTO production_lines (name, description, leader_employee_id) 
-            VALUES (?, ?, ?)
-        `, [name, description, leaderId]);
-        
-        const lineId = result.insertId;
+        await connection.query(`
+            INSERT INTO production_lines (id, name, description, leader_employee_id) 
+            VALUES (?, ?, ?, ?)
+        `, [lineId, name, description, leaderId]);
         
         if (employee_ids.length > 0) {
             const values = employee_ids.map(empId => [lineId, empId]);
@@ -108,7 +108,7 @@ exports.update = async (req, res) => {
         const { name, description, leader_employee_id, employee_ids } = req.body;
         const lineId = req.params.id;
         
-        connection = await db.getConnection();
+        connection = await db.pool.getConnection();
         await connection.beginTransaction();
         
         const leaderId = leader_employee_id || null;
@@ -149,7 +149,7 @@ exports.update = async (req, res) => {
 
 exports.delete = async (req, res) => {
     try {
-        const [result] = await db.query('DELETE FROM production_lines WHERE id = ?', [req.params.id]);
+        const [result] = await db.pool.query('DELETE FROM production_lines WHERE id = ?', [req.params.id]);
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Production line not found' });
         res.json({ message: 'Deleted successfully' });
     } catch (error) {

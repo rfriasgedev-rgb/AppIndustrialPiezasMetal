@@ -5,8 +5,7 @@ import { useAuth } from '../context/AuthContext';
 
 const STAGES = {
     DESIGN: 'Diseño', CUTTING: 'Corte',
-    BENDING: 'Doblado', ASSEMBLY: 'Ensamblaje', WELDING: 'Soldadura', CLEANING: 'Limpieza',
-    PAINTING: 'Pintura', QUALITY_CHECK: 'Control Calidad', READY: 'Terminado'
+    BENDING: 'Doblado', ASSEMBLY: 'Ensamblaje', WELDING: 'Soldadura', CLEANING: 'Línea de Producción'
 };
 
 const NEXT_AVAILABLE_STAGES = {
@@ -15,9 +14,7 @@ const NEXT_AVAILABLE_STAGES = {
     BENDING: ['ASSEMBLY', 'WELDING', 'CLEANING'],
     ASSEMBLY: ['WELDING', 'CLEANING'],
     WELDING: ['CLEANING'],
-    CLEANING: ['PAINTING'],
-    PAINTING: ['QUALITY_CHECK'],
-    QUALITY_CHECK: ['READY', 'CUTTING', 'PAINTING'],
+    CLEANING: ['READY'],
 };
 
 export default function WorkQueue() {
@@ -136,7 +133,7 @@ export default function WorkQueue() {
                                                     className="btn btn-sm btn-outline-success mr-2 mb-2"
                                                     onClick={() => handleAdvance(item, next)}
                                                 >
-                                                    Pasar a {STAGES[next]} <i className="fas fa-arrow-right ml-1"></i>
+                                                    {next === 'READY' ? 'Finalizar Producción' : `Pasar a ${STAGES[next]}`} <i className="fas fa-arrow-right ml-1"></i>
                                                 </button>
                                             ))}
                                             {/* El botón Cancelar/Merma ha sido retirado de esta vista */}

@@ -7,20 +7,19 @@ import ModalProductSearch from '../components/ModalProductSearch';
 
 const STATUS_LABELS = {
     DRAFT: 'Borrador', PENDING_MATERIAL: 'Esperando Material', CUTTING: 'Corte',
-    BENDING: 'Doblado', ASSEMBLY: 'Ensamblaje', CLEANING: 'Limpieza',
-    PAINTING: 'Pintura', QUALITY_CHECK: 'Control Calidad', READY_FOR_DELIVERY: 'Listo p/Entrega',
-    DELIVERED: 'Entregado', CANCELLED: 'Cancelado',
+    BENDING: 'Doblado', ASSEMBLY: 'Ensamblaje', CLEANING: 'Línea de Producción',
+    READY_FOR_DELIVERY: 'Listo p/Entrega', DELIVERED: 'Entregado', CANCELLED: 'Cancelado',
 };
 const STATUS_COLORS = {
     DRAFT: 'secondary', PENDING_MATERIAL: 'warning', CUTTING: 'primary',
-    BENDING: 'info', ASSEMBLY: 'purple', CLEANING: 'teal', PAINTING: 'danger',
-    QUALITY_CHECK: 'warning', READY_FOR_DELIVERY: 'success', DELIVERED: 'dark', CANCELLED: 'danger',
+    BENDING: 'info', ASSEMBLY: 'purple', CLEANING: 'success', 
+    READY_FOR_DELIVERY: 'dark', DELIVERED: 'dark', CANCELLED: 'danger',
 };
 const PRIORITY_BADGES = { LOW: 'secondary', NORMAL: 'info', HIGH: 'warning', URGENT: 'danger' };
 const NEXT_STATUS = {
     DRAFT: 'PENDING_MATERIAL', PENDING_MATERIAL: 'CUTTING', CUTTING: 'BENDING',
-    BENDING: 'CLEANING', ASSEMBLY: 'CLEANING', CLEANING: 'PAINTING',
-    PAINTING: 'QUALITY_CHECK', QUALITY_CHECK: 'READY_FOR_DELIVERY', READY_FOR_DELIVERY: 'DELIVERED',
+    BENDING: 'CLEANING', ASSEMBLY: 'CLEANING', CLEANING: 'READY_FOR_DELIVERY',
+    READY_FOR_DELIVERY: 'DELIVERED',
 };
 
 export default function Production() {

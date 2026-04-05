@@ -10,7 +10,7 @@ export default function Employees() {
   const [roles, setRoles] = useState([]);
   const [showModal, setShowModal] = useState(false);
   
-  const initialForm = { id: null, first_name: '', last_name: '', department_id: '', shift_id: '', employee_role_id: '', is_active: true };
+  const initialForm = { id: null, first_name: '', last_name: '', email: '', phone: '', department_id: '', shift_id: '', employee_role_id: '', is_active: true };
   const [formData, setFormData] = useState(initialForm);
 
   useEffect(() => {
@@ -100,6 +100,8 @@ export default function Employees() {
               <thead className="table-light">
                 <tr>
                   <th className="ps-4">Nombre Completo</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
                   <th>Departamento</th>
                   <th>Rol</th>
                   <th>Turno</th>
@@ -113,6 +115,8 @@ export default function Employees() {
                     <td className="ps-4 fw-medium">
                         {item.first_name} {item.last_name}
                     </td>
+                    <td className="small">{item.email || <span className="text-muted">N/A</span>}</td>
+                    <td className="small">{item.phone || <span className="text-muted">N/A</span>}</td>
                     <td>{item.department_name}</td>
                     <td><span className="badge bg-secondary">{item.role_name}</span></td>
                     <td>{item.shift_name} <br/><small className="text-muted">{item.start_time} - {item.end_time}</small></td>
@@ -161,6 +165,17 @@ export default function Employees() {
                     </div>
                   </div>
                   
+                  <div className="row mb-3">
+                    <div className="col-md-6">
+                        <label className="form-label fw-medium">Email</label>
+                        <input type="email" className="form-control" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="ejemplo@correo.com" />
+                    </div>
+                    <div className="col-md-6">
+                        <label className="form-label fw-medium">Teléfono</label>
+                        <input type="text" className="form-control" value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="809-000-0000" />
+                    </div>
+                  </div>
+
                   <div className="row mb-3">
                     <div className="col-md-6">
                         <label className="form-label fw-medium">Departamento</label>

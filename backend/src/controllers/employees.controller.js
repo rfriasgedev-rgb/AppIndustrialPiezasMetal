@@ -17,7 +17,7 @@ exports.getAll = async (req, res) => {
             LEFT JOIN employee_roles r ON e.employee_role_id = r.id
             ORDER BY e.created_at DESC
         `;
-        const [rows] = await db.query(query);
+        const [rows] = await db.pool.query(query);
         res.json(rows);
     } catch (error) {
         console.error('Error fetching employees:', error);
@@ -39,7 +39,7 @@ exports.getById = async (req, res) => {
             LEFT JOIN employee_roles r ON e.employee_role_id = r.id
             WHERE e.id = ?
         `;
-        const [rows] = await db.query(query, [req.params.id]);
+        const [rows] = await db.pool.query(query, [req.params.id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Employee not found' });
         res.json(rows[0]);
     } catch (error) {
@@ -49,17 +49,17 @@ exports.getById = async (req, res) => {
 
 exports.create = async (req, res) => {
     try {
-        const { first_name, last_name, department_id, shift_id, employee_role_id, is_active } = req.body;
+        const { first_name, last_name, email, phone, department_id, shift_id, employee_role_id, is_active } = req.body;
         const id = crypto.randomUUID();
         
         const active = is_active !== undefined ? is_active : true;
 
-        await db.query(`
-            INSERT INTO employees (id, first_name, last_name, department_id, shift_id, employee_role_id, is_active) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `, [id, first_name, last_name, department_id, shift_id, employee_role_id, active]);
+        await db.pool.query(`
+            INSERT INTO employees (id, first_name, last_name, email, phone, department_id, shift_id, employee_role_id, is_active) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [id, first_name, last_name, email, phone, department_id, shift_id, employee_role_id, active]);
         
-        res.status(201).json({ id, first_name, last_name, department_id, shift_id, employee_role_id, is_active: active });
+        res.status(201).json({ id, first_name, last_name, email, phone, department_id, shift_id, employee_role_id, is_active: active });
     } catch (error) {
         console.error('Error creating employee:', error);
         res.status(500).json({ error: 'Server error creating employee' });
@@ -68,15 +68,15 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
     try {
-        const { first_name, last_name, department_id, shift_id, employee_role_id, is_active } = req.body;
-        const [result] = await db.query(`
+        const { first_name, last_name, email, phone, department_id, shift_id, employee_role_id, is_active } = req.body;
+        const [result] = await db.pool.query(`
             UPDATE employees 
-            SET first_name = ?, last_name = ?, department_id = ?, shift_id = ?, employee_role_id = ?, is_active = ?
+            SET first_name = ?, last_name = ?, email = ?, phone = ?, department_id = ?, shift_id = ?, employee_role_id = ?, is_active = ?
             WHERE id = ?
-        `, [first_name, last_name, department_id, shift_id, employee_role_id, is_active, req.params.id]);
+        `, [first_name, last_name, email, phone, department_id, shift_id, employee_role_id, is_active, req.params.id]);
         
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Employee not found' });
-        res.json({ id: req.params.id, first_name, last_name, department_id, shift_id, employee_role_id, is_active });
+        res.json({ id: req.params.id, first_name, last_name, email, phone, department_id, shift_id, employee_role_id, is_active });
     } catch (error) {
         console.error('Error updating employee:', error);
         res.status(500).json({ error: 'Server error updating employee' });
@@ -85,8 +85,7 @@ exports.update = async (req, res) => {
 
 exports.delete = async (req, res) => {
     try {
-        // Soft delete initially, if needed could be hard delete.
-        const [result] = await db.query('DELETE FROM employees WHERE id = ?', [req.params.id]);
+        const [result] = await db.pool.query('DELETE FROM employees WHERE id = ?', [req.params.id]);
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Employee not found' });
         res.json({ message: 'Deleted successfully' });
     } catch (error) {

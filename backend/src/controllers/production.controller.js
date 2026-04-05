@@ -6,12 +6,10 @@ const { auditLog } = require('../services/audit.service');
 const TRANSITIONS = {
     DESIGN: ['CUTTING', 'CANCELLED'],
     CUTTING: ['BENDING', 'CANCELLED'],
-    BENDING: ['ASSEMBLY', 'WELDING', 'CLEANING', 'CANCELLED'],  // ASSEMBLY o WELDING dependiendo de la pieza
+    BENDING: ['ASSEMBLY', 'WELDING', 'CLEANING', 'CANCELLED'],
     ASSEMBLY: ['WELDING', 'CLEANING', 'CANCELLED'],
     WELDING: ['CLEANING', 'CANCELLED'],
-    CLEANING: ['PAINTING', 'CANCELLED'],
-    PAINTING: ['QUALITY_CHECK', 'CANCELLED'],
-    QUALITY_CHECK: ['READY', 'CUTTING', 'PAINTING'],  // puede regresar a re-proceso
+    CLEANING: ['READY', 'CANCELLED'],
     READY: [],
     CANCELLED: [],
 };
