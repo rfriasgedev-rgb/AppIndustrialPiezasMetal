@@ -55,17 +55,20 @@ app.use(express.urlencoded({ extended: true }));
 
 const { globalLimiter } = require('./middlewares/rateLimiter.middleware');
 
+// Health Check (Always available)
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'OK', timestamp: new Date().toISOString(), db: global.isDbReady });
+});
+
 // Routes
 app.use('/api/', globalLimiter);
 app.use('/api/', (req, res, next) => {
-    // Si la ruta es health, dejarla pasar para monitoreo
-    if (req.path === '/health') return next();
-    
     if (global.isDbReady === false) {
-        return res.status(503).json({ error: 'El servidor está despertando base de datos...' });
+        return res.status(503).json({ error: 'El servidor está conectando con la base de datos...' });
     }
     next();
 });
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/clients', clientRoutes);
@@ -84,11 +87,6 @@ app.use('/api/schedules', schedulesRoutes);
 app.use('/api/employee-roles', employeeRolesRoutes);
 app.use('/api/employees', employeesRoutes);
 app.use('/api/production-lines', productionLinesRoutes);
-
-// Health Check
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
 
 // Serve frontend static files
 const fs = require('fs');
