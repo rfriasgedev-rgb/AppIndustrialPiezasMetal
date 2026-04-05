@@ -4,8 +4,7 @@ const { auditLog } = require('../services/audit.service');
 
 // Estado de máquina finita para el flujo de producción por PIEZA
 const TRANSITIONS = {
-    DESIGN: ['PENDING_MATERIAL', 'CANCELLED'],
-    PENDING_MATERIAL: ['CUTTING', 'CANCELLED'],
+    DESIGN: ['CUTTING', 'CANCELLED'],
     CUTTING: ['BENDING', 'CANCELLED'],
     BENDING: ['ASSEMBLY', 'WELDING', 'CLEANING', 'CANCELLED'],  // ASSEMBLY o WELDING dependiendo de la pieza
     ASSEMBLY: ['WELDING', 'CLEANING', 'CANCELLED'],
@@ -104,7 +103,7 @@ const create = async (req, res, next) => {
         // 2. Insertar Detalles (Items) iterativamente
         for (const item of items) {
             const detailId = uuidv4();
-            const initialStage = item.is_new ? 'DESIGN' : 'PENDING_MATERIAL';
+            const initialStage = item.is_new ? 'DESIGN' : 'CUTTING';
             
             await conn.query(
                 `INSERT INTO production_order_details (id, order_id, product_id, quantity, requires_assembly, notes, stage) 
