@@ -27,12 +27,6 @@ const path = require('path');
 
 const app = express();
 
-// Health Check (Always available and at the very top for Railway)
-app.get('/api/health', (req, res) => {
-    console.log('💓 Railway Healthcheck hit!');
-    res.json({ status: 'OK', timestamp: new Date().toISOString(), db: global.isDbReady });
-});
-
 // Security & Utility Middleware
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -54,6 +48,12 @@ app.use(helmet({
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
+
+// Health Check (Always available and at the root for Railway)
+app.get('/health', (req, res) => {
+    console.log('💓 Railway /health hit!');
+    res.json({ status: 'OK', timestamp: new Date().toISOString(), db: global.isDbReady });
+});
 
 // Servir archivos estáticos (imágenes)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
