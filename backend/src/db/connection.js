@@ -12,11 +12,8 @@ const pool = dbConfig
         database: process.env.DB_NAME || 'metal_parts_db',
         waitForConnections: true,
         connectionLimit: 10,
-        queueLimit: 10
+        queueLimit: 0
     });
-
-// Híbrido: permitir tanto db.query como db.pool.query
-pool.pool = pool;
 
 async function testConnection() {
     try {
@@ -30,6 +27,4 @@ async function testConnection() {
     }
 }
 
-pool.testConnection = testConnection;
-
-module.exports = pool;
+module.exports = { pool, testConnection };

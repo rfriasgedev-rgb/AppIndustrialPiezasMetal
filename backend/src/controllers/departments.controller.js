@@ -1,9 +1,9 @@
-const db = require('../db/connection');
+const { pool } = require('../db/connection');
 const { v4: uuidv4 } = require('uuid');
 
 exports.getAll = async (req, res) => {
     try {
-        const [rows] = await db.pool.query('SELECT * FROM departments ORDER BY name');
+        const [rows] = await pool.query('SELECT * FROM departments ORDER BY name');
         res.json(rows);
     } catch (error) {
         console.error('Error fetching departments:', error);
@@ -13,7 +13,7 @@ exports.getAll = async (req, res) => {
 
 exports.getById = async (req, res) => {
     try {
-        const [rows] = await db.pool.query('SELECT * FROM departments WHERE id = ?', [req.params.id]);
+        const [rows] = await pool.query('SELECT * FROM departments WHERE id = ?', [req.params.id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Department not found' });
         res.json(rows[0]);
     } catch (error) {
@@ -25,7 +25,7 @@ exports.create = async (req, res) => {
     try {
         const { name, description } = req.body;
         const id = uuidv4();
-        await db.pool.query('INSERT INTO departments (id, name, description) VALUES (?, ?, ?)', [id, name, description]);
+        await pool.query('INSERT INTO departments (id, name, description) VALUES (?, ?, ?)', [id, name, description]);
         res.status(201).json({ id, name, description });
     } catch (error) {
         console.error('Error creating department:', error);
@@ -37,7 +37,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const { name, description } = req.body;
-        const [result] = await db.pool.query('UPDATE departments SET name = ?, description = ? WHERE id = ?', [name, description, req.params.id]);
+        const [result] = await pool.query('UPDATE departments SET name = ?, description = ? WHERE id = ?', [name, description, req.params.id]);
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Department not found' });
         res.json({ id: req.params.id, name, description });
     } catch (error) {
@@ -48,7 +48,7 @@ exports.update = async (req, res) => {
 
 exports.delete = async (req, res) => {
     try {
-        const [result] = await db.pool.query('DELETE FROM departments WHERE id = ?', [req.params.id]);
+        const [result] = await pool.query('DELETE FROM departments WHERE id = ?', [req.params.id]);
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Department not found' });
         res.json({ message: 'Deleted successfully' });
     } catch (error) {
