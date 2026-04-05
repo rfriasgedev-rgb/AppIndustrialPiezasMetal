@@ -19,6 +19,7 @@ startup.log
 mariadb/
 *.zip
 *.sql
+!backend/src/db/*.sql
 *.sqlite
 
 # Carpetas de Construcción (Frontend)
