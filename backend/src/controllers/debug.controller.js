@@ -15,24 +15,23 @@ exports.getDbStatus = async (req, res) => {
         const [rolesSchema] = await pool.query('DESCRIBE employee_roles').catch(() => [[]]);
         const [empSchema] = await pool.query('DESCRIBE employees').catch(() => [[]]);
         
-        // 4. Verificar archivos físicos en la carpeta db
-        const dbDir = path.join(__dirname, '../db');
-        let dbFiles = [];
-        if (fs.existsSync(dbDir)) {
-            dbFiles = fs.readdirSync(dbDir);
-        }
+        // 4. Leer contenido REAL de los archivos en el servidor
+        const deptControllerPath = path.join(__dirname, './departments.controller.js');
+        const deptCode = fs.existsSync(deptControllerPath) 
+            ? fs.readFileSync(deptControllerPath, 'utf8').substring(0, 1000) // Solo los primeros 1000 caracteres
+            : 'ARCHIVO NO ENCONTRADO EN ' + deptControllerPath;
 
-        // 4. Ver log de migración (si existe el global)
+        // 5. Ver log de migración
         const migrationSummary = global.migrationResults || 'Log no inicializado';
 
         res.json({
             status: 'Diagnostic Report',
             server_time: new Date().toISOString(),
             mysql_version: version[0].version,
-            database_name: process.env.DB_NAME || 'Detectado por URI',
-            tables_count: tables.length,
-            tables_list: tables, 
-            physical_db_files: dbFiles,
+            dept_schema: deptSchema,
+            roles_schema: rolesSchema,
+            emp_schema: empSchema,
+            dept_controller_preview: deptCode, // ESTO NOS DIRÁ LA VERDAD
             migration_log: migrationSummary
         });
     } catch (error) {
