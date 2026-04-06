@@ -61,8 +61,6 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString(), db: global.isDbReady });
 });
 
-app.get('/api/debug/db', debugController.getDbStatus);
-
 // Servir archivos estáticos (imágenes)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use(express.urlencoded({ extended: true }));
