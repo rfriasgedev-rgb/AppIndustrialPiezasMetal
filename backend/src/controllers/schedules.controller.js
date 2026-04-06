@@ -7,7 +7,7 @@ exports.getAll = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('Error fetching schedules:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'DEBUG_DB: ' + (error.message || 'No msg') });
     }
 };
 
@@ -17,7 +17,7 @@ exports.getById = async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ error: 'Schedule not found' });
         res.json(rows[0]);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'DEBUG_DB: ' + (error.message || 'No msg') });
     }
 };
 
@@ -30,7 +30,7 @@ exports.create = async (req, res) => {
     } catch (error) {
         console.error('Error creating schedule:', error);
         if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Schedule already exists' });
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'DEBUG_DB: ' + (error.message || 'No msg') });
     }
 };
 
@@ -42,7 +42,7 @@ exports.update = async (req, res) => {
         res.json({ id: req.params.id, name, start_time, end_time });
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Schedule name already in use' });
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'DEBUG_DB: ' + (error.message || 'No msg') });
     }
 };
 
@@ -52,6 +52,6 @@ exports.delete = async (req, res) => {
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Schedule not found' });
         res.json({ message: 'Deleted successfully' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'DEBUG_DB: ' + (error.message || 'No msg') });
     }
 };
