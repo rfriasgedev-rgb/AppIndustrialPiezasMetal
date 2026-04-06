@@ -30,7 +30,6 @@ const app = express();
 app.set('trust proxy', 1); // Trust Railway proxy
 
 // RUTA DE DIAGNÓSTICO PRIORITARIA (Bypass for Railway Debug)
-const debugController = require('./controllers/debug.controller');
 app.get('/api/debug/db', debugController.getDbStatus);
 
 // Security & Utility Middleware
