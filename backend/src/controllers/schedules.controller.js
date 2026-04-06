@@ -6,8 +6,8 @@ exports.getAll = async (req, res) => {
         const [rows] = await pool.query('SELECT * FROM shifts ORDER BY start_time');
         res.json(rows);
     } catch (error) {
-        console.error('Error fetching schedules:', error);
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
 
@@ -17,7 +17,7 @@ exports.getById = async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ error: 'Schedule not found' });
         res.json(rows[0]);
     } catch (error) {
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
 
@@ -28,9 +28,8 @@ exports.create = async (req, res) => {
         await pool.query('INSERT INTO shifts (id, name, start_time, end_time) VALUES (?, ?, ?, ?)', [id, name, start_time, end_time]);
         res.status(201).json({ id, name, start_time, end_time });
     } catch (error) {
-        console.error('Error creating schedule:', error);
-        if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Schedule already exists' });
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
 
@@ -41,8 +40,7 @@ exports.update = async (req, res) => {
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Schedule not found' });
         res.json({ id: req.params.id, name, start_time, end_time });
     } catch (error) {
-        if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Schedule name already in use' });
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
 
@@ -52,6 +50,6 @@ exports.delete = async (req, res) => {
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Schedule not found' });
         res.json({ message: 'Deleted successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'Server error (may be in use)' });
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };

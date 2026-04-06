@@ -20,8 +20,8 @@ exports.getAll = async (req, res) => {
         const [rows] = await pool.query(query);
         res.json(rows);
     } catch (error) {
-        console.error('Error fetching employees:', error);
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
 
@@ -43,7 +43,7 @@ exports.getById = async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ error: 'Employee not found' });
         res.json(rows[0]);
     } catch (error) {
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
 
@@ -61,9 +61,8 @@ exports.create = async (req, res) => {
         
         res.status(201).json({ id, first_name, last_name, email, phone, department_id, shift_id, employee_role_id, is_active: active });
     } catch (error) {
-        console.error('Error creating employee:', error);
-        if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Employee already exists' });
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
 
@@ -79,9 +78,8 @@ exports.update = async (req, res) => {
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Employee not found' });
         res.json({ id: req.params.id, first_name, last_name, email, phone, department_id, shift_id, employee_role_id, is_active });
     } catch (error) {
-        console.error('Error updating employee:', error);
-        if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Data collision' });
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
 
@@ -91,6 +89,6 @@ exports.delete = async (req, res) => {
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Employee not found' });
         res.json({ message: 'Deleted successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'Server error (employee may be in use)' });
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };

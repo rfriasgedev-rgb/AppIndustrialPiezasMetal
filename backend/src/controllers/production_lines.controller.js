@@ -14,7 +14,6 @@ exports.getAll = async (req, res) => {
         `;
         const [rows] = await pool.query(query);
         
-        // Populate with line employees
         const [lineEmployees] = await pool.query(`
             SELECT ple.line_id, ple.employee_id, e.first_name, e.last_name, er.name as role_name
             FROM production_line_employees ple
@@ -31,8 +30,8 @@ exports.getAll = async (req, res) => {
         
         res.json(result);
     } catch (error) {
-        console.error('Error fetching production lines:', error);
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
 
@@ -51,8 +50,6 @@ exports.getById = async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ error: 'Production line not found' });
         
         const line = rows[0];
-        
-        // fetch employees
         const [employees] = await pool.query(`
             SELECT ple.employee_id, e.first_name, e.last_name, er.name as role_name
             FROM production_line_employees ple
@@ -62,10 +59,9 @@ exports.getById = async (req, res) => {
         `, [line.id]);
         
         line.employees = employees;
-        
         res.json(line);
     } catch (error) {
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
 
@@ -73,30 +69,21 @@ exports.create = async (req, res) => {
     let connection;
     try {
         const { name, description, leader_employee_id, employee_ids = [] } = req.body;
-        
         connection = await pool.getConnection();
         await connection.beginTransaction();
-        
         const lineId = uuidv4();
         const leaderId = leader_employee_id || null;
-
-        await connection.query(`
-            INSERT INTO production_lines (id, name, description, leader_employee_id) 
-            VALUES (?, ?, ?, ?)
-        `, [lineId, name, description, leaderId]);
-        
+        await connection.query('INSERT INTO production_lines (id, name, description, leader_employee_id) VALUES (?, ?, ?, ?)', [lineId, name, description, leaderId]);
         if (employee_ids.length > 0) {
             const values = employee_ids.map(empId => [lineId, empId]);
             await connection.query('INSERT IGNORE INTO production_line_employees (line_id, employee_id) VALUES ?', [values]);
         }
-        
         await connection.commit();
         res.status(201).json({ id: lineId, name, description, leader_employee_id: leaderId });
     } catch (error) {
         if (connection) await connection.rollback();
-        console.error('Error creating production line:', error);
-        if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Production line already exists' });
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     } finally {
         if (connection) connection.release();
     }
@@ -107,23 +94,14 @@ exports.update = async (req, res) => {
     try {
         const { name, description, leader_employee_id, employee_ids } = req.body;
         const lineId = req.params.id;
-        
         connection = await pool.getConnection();
         await connection.beginTransaction();
-        
         const leaderId = leader_employee_id || null;
-
-        const [result] = await connection.query(`
-            UPDATE production_lines 
-            SET name = ?, description = ?, leader_employee_id = ?
-            WHERE id = ?
-        `, [name, description, leaderId, lineId]);
-        
+        const [result] = await connection.query('UPDATE production_lines SET name = ?, description = ?, leader_employee_id = ? WHERE id = ?', [name, description, leaderId, lineId]);
         if (result.affectedRows === 0) {
             await connection.rollback();
             return res.status(404).json({ error: 'Production line not found' });
         }
-        
         if (employee_ids !== undefined && Array.isArray(employee_ids)) {
             await connection.query('DELETE FROM production_line_employees WHERE line_id = ?', [lineId]);
             if (employee_ids.length > 0) {
@@ -131,14 +109,12 @@ exports.update = async (req, res) => {
                 await connection.query('INSERT IGNORE INTO production_line_employees (line_id, employee_id) VALUES ?', [values]);
             }
         }
-        
         await connection.commit();
         res.json({ id: lineId, name, description, leader_employee_id: leaderId });
     } catch (error) {
         if (connection) await connection.rollback();
-        console.error('Error updating production line:', error);
-        if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Name already in use' });
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     } finally {
         if (connection) connection.release();
     }
@@ -150,6 +126,6 @@ exports.delete = async (req, res) => {
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Production line not found' });
         res.json({ message: 'Deleted successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'Server error (may be in use)' });
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
