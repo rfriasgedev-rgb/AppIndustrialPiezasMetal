@@ -7,7 +7,7 @@ exports.getAll = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('Error fetching employee roles:', error);
-        res.status(500).json({ error: 'Server error fetching employee roles' });
+        res.status(500).json({ error: error.message });
     }
 };
 

@@ -21,7 +21,7 @@ exports.getAll = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('Error fetching employees:', error);
-        res.status(500).json({ error: 'Server error fetching employees' });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -62,7 +62,7 @@ exports.create = async (req, res) => {
         res.status(201).json({ id, first_name, last_name, email, phone, department_id, shift_id, employee_role_id, is_active: active });
     } catch (error) {
         console.error('Error creating employee:', error);
-        res.status(500).json({ error: 'Server error creating employee' });
+        res.status(500).json({ error: error.message });
     }
 };
 

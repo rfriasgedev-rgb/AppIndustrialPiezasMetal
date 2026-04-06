@@ -32,7 +32,7 @@ exports.getAll = async (req, res) => {
         res.json(result);
     } catch (error) {
         console.error('Error fetching production lines:', error);
-        res.status(500).json({ error: 'Server error fetching production lines' });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -96,7 +96,7 @@ exports.create = async (req, res) => {
         if (connection) await connection.rollback();
         console.error('Error creating production line:', error);
         if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Production line already exists' });
-        res.status(500).json({ error: 'Server error creating line' });
+        res.status(500).json({ error: error.message });
     } finally {
         if (connection) connection.release();
     }
