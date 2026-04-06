@@ -7,7 +7,7 @@ exports.getAll = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('Error fetching departments:', error);
-        res.status(500).json({ error: 'Server error fetching departments' });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -17,7 +17,7 @@ exports.getById = async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ error: 'Department not found' });
         res.json(rows[0]);
     } catch (error) {
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -30,7 +30,7 @@ exports.create = async (req, res) => {
     } catch (error) {
         console.error('Error creating department:', error);
         if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Department already exists' });
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -42,7 +42,7 @@ exports.update = async (req, res) => {
         res.json({ id: req.params.id, name, description });
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Department name already in use' });
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -52,6 +52,6 @@ exports.delete = async (req, res) => {
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Department not found' });
         res.json({ message: 'Deleted successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'Server error (may be in use)' });
+        res.status(500).json({ error: error.message });
     }
 };
