@@ -1,5 +1,5 @@
 const { pool } = require('../db/connection');
-const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid');
 
 exports.getAll = async (req, res) => {
     try {
@@ -21,7 +21,7 @@ exports.getAll = async (req, res) => {
         res.json(rows);
     } catch (error) {
         console.error('Error fetching employees:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Server error' });
     }
 };
 
@@ -50,7 +50,7 @@ exports.getById = async (req, res) => {
 exports.create = async (req, res) => {
     try {
         const { first_name, last_name, email, phone, department_id, shift_id, employee_role_id, is_active } = req.body;
-        const id = crypto.randomUUID();
+        const id = uuidv4();
         
         const active = is_active !== undefined ? is_active : true;
 
@@ -62,7 +62,8 @@ exports.create = async (req, res) => {
         res.status(201).json({ id, first_name, last_name, email, phone, department_id, shift_id, employee_role_id, is_active: active });
     } catch (error) {
         console.error('Error creating employee:', error);
-        res.status(500).json({ error: error.message });
+        if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Employee already exists' });
+        res.status(500).json({ error: 'Server error' });
     }
 };
 
@@ -79,7 +80,8 @@ exports.update = async (req, res) => {
         res.json({ id: req.params.id, first_name, last_name, email, phone, department_id, shift_id, employee_role_id, is_active });
     } catch (error) {
         console.error('Error updating employee:', error);
-        res.status(500).json({ error: 'Server error updating employee' });
+        if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Data collision' });
+        res.status(500).json({ error: 'Server error' });
     }
 };
 

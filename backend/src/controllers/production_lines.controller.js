@@ -32,7 +32,7 @@ exports.getAll = async (req, res) => {
         res.json(result);
     } catch (error) {
         console.error('Error fetching production lines:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Server error' });
     }
 };
 
@@ -96,7 +96,7 @@ exports.create = async (req, res) => {
         if (connection) await connection.rollback();
         console.error('Error creating production line:', error);
         if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Production line already exists' });
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Server error' });
     } finally {
         if (connection) connection.release();
     }
@@ -124,11 +124,8 @@ exports.update = async (req, res) => {
             return res.status(404).json({ error: 'Production line not found' });
         }
         
-        // If employee_ids provided, sync them
         if (employee_ids !== undefined && Array.isArray(employee_ids)) {
-            // Delete old
             await connection.query('DELETE FROM production_line_employees WHERE line_id = ?', [lineId]);
-            // Insert new
             if (employee_ids.length > 0) {
                 const values = employee_ids.map(empId => [lineId, empId]);
                 await connection.query('INSERT IGNORE INTO production_line_employees (line_id, employee_id) VALUES ?', [values]);
@@ -141,7 +138,7 @@ exports.update = async (req, res) => {
         if (connection) await connection.rollback();
         console.error('Error updating production line:', error);
         if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'Name already in use' });
-        res.status(500).json({ error: 'Server error updating line' });
+        res.status(500).json({ error: 'Server error' });
     } finally {
         if (connection) connection.release();
     }
