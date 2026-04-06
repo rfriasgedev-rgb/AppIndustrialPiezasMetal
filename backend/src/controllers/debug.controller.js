@@ -1,29 +1,36 @@
 const { pool } = require('../db/connection');
-const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+const path = require('path');
 
 exports.getDbStatus = async (req, res) => {
     try {
         const results = {};
         
-        // 1. Prueba de INSERT real en departments
-        try {
-            const testId = uuidv4();
-            await pool.query('INSERT INTO departments (id, name, description) VALUES (?, ?, ?)', 
-                [testId, 'DEBUG_TEST_' + Date.now(), 'Prueba técnica']);
-            results.insert_test = '✅ ÉXITO: Inserción completada.';
-        } catch (err) {
-            results.insert_test = `❌ FALLO: ${err.message} (Code: ${err.code})`;
+        // 1. Leer archivos de controladores vivos
+        const controllers = ['departments', 'employees', 'schedules', 'employee_roles'];
+        results.files = {};
+        
+        for (const ctrl of controllers) {
+            const p = path.join(__dirname, `./${ctrl}.controller.js`);
+            results.files[ctrl] = fs.existsSync(p) 
+                ? fs.readFileSync(p, 'utf8').substring(0, 1500) 
+                : 'NO ENCONTRADO';
         }
 
-        // 2. Esquema real
-        const [schema] = await pool.query('DESCRIBE departments');
-        results.schema = schema;
-
-        // 3. Log de migración
-        results.migration_log = global.migrationResults || 'No log';
+        // 2. Esquema de tablas de personal
+        results.schemas = {};
+        const tables = ['departments', 'shifts', 'employee_roles', 'employees'];
+        for (const t of tables) {
+            try {
+                const [schema] = await pool.query(`DESCRIBE ${t}`);
+                results.schemas[t] = schema;
+            } catch (e) {
+                results.schemas[t] = 'ERROR: ' + e.message;
+            }
+        }
 
         res.json({
-            status: 'Diagnostic Result',
+            status: 'Deep Diagnostic Report',
             server_time: new Date().toISOString(),
             ...results
         });
