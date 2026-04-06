@@ -28,6 +28,10 @@ const path = require('path');
 
 const app = express();
 
+// RUTA DE DIAGNÓSTICO PRIORITARIA (Bypass for Railway Debug)
+const debugController = require('./controllers/debug.controller');
+app.get('/api/debug/db', debugController.getDbStatus);
+
 // Security & Utility Middleware
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
