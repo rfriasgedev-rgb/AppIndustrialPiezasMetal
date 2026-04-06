@@ -94,6 +94,18 @@ async function migrate() {
             }
         }
 
+        // 7. Ejecutar Reparación Forzada definitiva (Roles, Empleados, Líneas)
+        const repairPath = path.join(__dirname, 'schema_force_repair.sql');
+        if (fs.existsSync(repairPath)) {
+            const repairSql = fs.readFileSync(repairPath, 'utf8');
+            console.log('Ejecutando schema_force_repair.sql (Reparación Definitiva)...');
+            try {
+                await connection.query(repairSql);
+            } catch (err) {
+                console.warn('⚠️ Advertencia en reparación forzada:', err.message);
+            }
+        }
+
         console.log('✅ Migraciones completadas exitosamente.');
         return true;
     } catch (error) {
