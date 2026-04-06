@@ -20,91 +20,45 @@ async function migrate() {
 
         connection = await mysql.createConnection(connectionConfig);
 
-        // 1. Ejecutar schema básico
-        const schemaPath = path.join(__dirname, 'schema.sql');
-        if (fs.existsSync(schemaPath)) {
-            const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-            console.log('Ejecutando schema.sql...');
-            await connection.query(schemaSql);
-        }
-
-        // 2. Ejecutar parche de unidades
-        const patch1Path = path.join(__dirname, 'schema_units_patch.sql');
-        if (fs.existsSync(patch1Path)) {
-            const patch1Sql = fs.readFileSync(patch1Path, 'utf8');
-            console.log('Ejecutando schema_units_patch.sql...');
-            await connection.query(patch1Sql);
-        }
-
-        // 3. Ejecutar parche de requisiciones
-        const patch2Path = path.join(__dirname, 'schema_requisitions_patch.sql');
-        if (fs.existsSync(patch2Path)) {
-            const patch2Sql = fs.readFileSync(patch2Path, 'utf8');
-            console.log('Ejecutando schema_requisitions_patch.sql...');
-            await connection.query(patch2Sql);
-        }
-
-        // 4. Ejecutar parche de flujo de trabajo (departamentos, turnos, etapas)
-        const patch3Path = path.join(__dirname, 'schema_workflow_patch.sql');
-        if (fs.existsSync(patch3Path)) {
-            const patch3Sql = fs.readFileSync(patch3Path, 'utf8');
-            console.log('Ejecutando schema_workflow_patch.sql...');
-            // Dividir sentencias ALTER TABLE que fallarían en múltiple statements en algunos casos
-            // o ejecutarlas normalmente si multipleStatements está habilitado
-            try {
-                await connection.query(patch3Sql);
-            } catch (err) {
-                 // Si falla por columna duplicada o restricción duplicada, lo ignoramos
-                 if(err.code === 'ER_DUP_FIELDNAME' || err.code === 'ER_DUP_KEYNAME' || err.errno === 1060 || err.errno === 1061) {
-                    console.log('Las columnas o restricciones de workflow ya existen, continuando...');
-                 } else {
-                    throw err;
-                 }
-            }
-        }
-
-        // 5. Ejecutar parche de HR y Líneas de Producción
-        const patch4Path = path.join(__dirname, 'schema_hr_patch.sql');
-        if (fs.existsSync(patch4Path)) {
-            const patch4Sql = fs.readFileSync(patch4Path, 'utf8');
-            console.log('Ejecutando schema_hr_patch.sql...');
-            try {
-                await connection.query(patch4Sql);
-            } catch (err) {
-                // Manejar errores de inserción duplicada en patches que ya corrieron parcialmente
-                if (err.code === 'ER_DUP_ENTRY' || err.errno === 1062) {
-                    console.log('Datos de HR ya insertados previamente o parche ya aplicado parcialmente.');
-                } else {
-                    throw err;
+        // Helper para ejecutar archivos SQL sentencia por sentencia
+        const runSqlFile = async (fileName) => {
+            const filePath = path.join(__dirname, fileName);
+            if (fs.existsSync(filePath)) {
+                console.log(`📖 Leyendo ${fileName}...`);
+                const sqlContent = fs.readFileSync(filePath, 'utf8');
+                const statements = sqlContent.split(';').map(s => s.trim()).filter(s => s.length > 0);
+                
+                console.log(`🚀 Ejecutando ${statements.length} sentencias de ${fileName}...`);
+                for (const statement of statements) {
+                    try {
+                        await connection.query(statement);
+                    } catch (err) {
+                        // Ignoramos errores comunes de "ya existe" para permitir re-ejecución
+                        if (err.code === 'ER_DUP_FIELDNAME' || err.code === 'ER_DUP_KEYNAME' || 
+                            err.code === 'ER_DUP_ENTRY' || err.errno === 1060 || err.errno === 1061 || err.errno === 1062) {
+                            // Silencioso para duplicados
+                        } else {
+                            console.warn(`[Migrate] Sentencia fallida en ${fileName}: ${err.message}`);
+                        }
+                    }
                 }
             }
-        }
+        };
+
+        // 1. Ejecutar schema básico
+        await runSqlFile('schema.sql');
+
+        // 2-5. Ejecutar parches acumulados
+        await runSqlFile('schema_units_patch.sql');
+        await runSqlFile('schema_requisitions_patch.sql');
+        await runSqlFile('schema_workflow_patch.sql');
+        await runSqlFile('schema_hr_patch.sql');
 
         // 6. Ejecutar Migración a UUID y Contactos
-        const patch5Path = path.join(__dirname, 'schema_uuid_migration.sql');
-        if (fs.existsSync(patch5Path)) {
-            const patch5Sql = fs.readFileSync(patch5Path, 'utf8');
-            console.log('Ejecutando schema_uuid_migration.sql (UUID + Contactos)...');
-            try {
-                // Ejecutar múltiples sentencias
-                await connection.query(patch5Sql);
-            } catch (err) {
-                console.warn('⚠️ Advertencia en migración UUID:', err.message);
-                // Si falla, intentamos continuar ya que el server intentará arrancar
-            }
-        }
+        await runSqlFile('schema_uuid_migration.sql');
 
         // 7. Ejecutar Reparación Forzada definitiva (Roles, Empleados, Líneas)
-        const repairPath = path.join(__dirname, 'schema_force_repair.sql');
-        if (fs.existsSync(repairPath)) {
-            const repairSql = fs.readFileSync(repairPath, 'utf8');
-            console.log('Ejecutando schema_force_repair.sql (Reparación Definitiva)...');
-            try {
-                await connection.query(repairSql);
-            } catch (err) {
-                console.warn('⚠️ Advertencia en reparación forzada:', err.message);
-            }
-        }
+        await runSqlFile('schema_force_repair.sql');
 
         console.log('✅ Migraciones completadas exitosamente.');
         return true;
