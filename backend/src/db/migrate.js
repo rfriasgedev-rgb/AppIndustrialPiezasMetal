@@ -59,15 +59,17 @@ async function migrate() {
         // 8. UNIFICACIÓN TOTAL DEFINITIVA (UUID Standard across all HR tables)
         await runSqlFile('schema_final_unification.sql');
 
-        console.log('✅ Migraciones completadas exitosamente.');
+        // 9. RESCATE MAESTRO (Hard reset for any remaining column conflicts)
+        await runSqlFile('schema_hard_reset.sql');
+
+        log('✅ Migraciones completadas exitosamente.');
         return true;
     } catch (error) {
+        if (global.migrationResults) {
+            global.migrationResults.push(`[${new Date().toISOString()}] ❌ ERROR CRÍTICO: ${error.message}`);
+        }
         console.error('❌ Error ejecutando migraciones:', error);
         return false;
-    } finally {
-        if (connection) {
-            await connection.end();
-        }
     }
 }
 

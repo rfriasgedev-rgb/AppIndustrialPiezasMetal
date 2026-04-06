@@ -27,6 +27,7 @@ const { errorHandler } = require('./middlewares/error.middleware');
 const path = require('path');
 
 const app = express();
+app.set('trust proxy', 1); // Trust Railway proxy
 
 // RUTA DE DIAGNÓSTICO PRIORITARIA (Bypass for Railway Debug)
 const debugController = require('./controllers/debug.controller');
