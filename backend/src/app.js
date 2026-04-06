@@ -22,6 +22,7 @@ const schedulesRoutes = require('./routes/schedules.routes');
 const employeeRolesRoutes = require('./routes/employee_roles.routes');
 const employeesRoutes = require('./routes/employees.routes');
 const productionLinesRoutes = require('./routes/production_lines.routes');
+const debugController = require('./controllers/debug.controller');
 const { errorHandler } = require('./middlewares/error.middleware');
 const path = require('path');
 
@@ -54,6 +55,8 @@ app.get('/health', (req, res) => {
     console.log('💓 Railway /health hit!');
     res.json({ status: 'OK', timestamp: new Date().toISOString(), db: global.isDbReady });
 });
+
+app.get('/api/debug/db', debugController.getDbStatus);
 
 // Servir archivos estáticos (imágenes)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

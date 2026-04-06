@@ -4,18 +4,25 @@ const { pool } = require('./connection');
 
 async function migrate() {
     console.log('🔄 Ejecutando migraciones de base de datos...');
+    global.migrationResults = [];
+    const log = (msg) => {
+        console.log(msg);
+        global.migrationResults.push(`[${new Date().toISOString()}] ${msg}`);
+    };
+
     try {
         const connection = pool;
+        log('🔌 Conexión al pool establecida para migración.');
 
         // Helper para ejecutar archivos SQL sentencia por sentencia
         const runSqlFile = async (fileName) => {
             const filePath = path.join(__dirname, fileName);
             if (fs.existsSync(filePath)) {
-                console.log(`📖 Leyendo ${fileName}...`);
+                log(`📖 Leyendo ${fileName}...`);
                 const sqlContent = fs.readFileSync(filePath, 'utf8');
                 const statements = sqlContent.split(';').map(s => s.trim()).filter(s => s.length > 0);
                 
-                console.log(`🚀 Ejecutando ${statements.length} sentencias de ${fileName}...`);
+                log(`🚀 Ejecutando ${statements.length} sentencias de ${fileName}...`);
                 for (const statement of statements) {
                     try {
                         await connection.query(statement);
@@ -25,10 +32,12 @@ async function migrate() {
                             err.code === 'ER_DUP_ENTRY' || err.errno === 1060 || err.errno === 1061 || err.errno === 1062) {
                             // Silencioso para duplicados
                         } else {
-                            console.warn(`[Migrate] Sentencia fallida en ${fileName}: ${err.message}`);
+                            log(`⚠️ Sentencia fallida en ${fileName}: ${err.message}`);
                         }
                     }
                 }
+            } else {
+                log(`❌ Archivo NO ENCONTRADO: ${fileName} en ruta ${filePath}`);
             }
         };
 
