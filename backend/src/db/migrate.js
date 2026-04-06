@@ -56,6 +56,9 @@ async function migrate() {
         // 7. Ejecutar Reparación Forzada definitiva (Roles, Empleados, Líneas)
         await runSqlFile('schema_force_repair.sql');
 
+        // 8. UNIFICACIÓN TOTAL DEFINITIVA (UUID Standard across all HR tables)
+        await runSqlFile('schema_final_unification.sql');
+
         console.log('✅ Migraciones completadas exitosamente.');
         return true;
     } catch (error) {
