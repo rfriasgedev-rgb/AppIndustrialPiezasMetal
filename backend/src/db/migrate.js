@@ -80,6 +80,20 @@ async function migrate() {
             }
         }
 
+        // 6. Ejecutar Migración a UUID y Contactos
+        const patch5Path = path.join(__dirname, 'schema_uuid_migration.sql');
+        if (fs.existsSync(patch5Path)) {
+            const patch5Sql = fs.readFileSync(patch5Path, 'utf8');
+            console.log('Ejecutando schema_uuid_migration.sql (UUID + Contactos)...');
+            try {
+                // Ejecutar múltiples sentencias
+                await connection.query(patch5Sql);
+            } catch (err) {
+                console.warn('⚠️ Advertencia en migración UUID:', err.message);
+                // Si falla, intentamos continuar ya que el server intentará arrancar
+            }
+        }
+
         console.log('✅ Migraciones completadas exitosamente.');
         return true;
     } catch (error) {

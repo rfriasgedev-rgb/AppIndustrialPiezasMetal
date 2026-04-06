@@ -15,10 +15,18 @@ app.get('/', (req, res) => {
 
 // Inicia el servidor HTTP escuchando en 0.0.0.0 para compatibilidad con Railway
 const HOST = '0.0.0.0';
-app.listen(PORT, HOST, () => {
+app.listen(PORT, HOST, async () => {
     console.log(`🚀 [API] Servidor HTTP corriendo en http://${HOST}:${PORT}`);
     console.log(`📦 [Ambiente] ${process.env.NODE_ENV || 'development'}`);
     
+    // Ejecutar migraciones antes de marcar como lista
+    try {
+        await migrate();
+        console.log('✅ [Migraciones] Verificadas y aplicadas.');
+    } catch (err) {
+        console.error('❌ [Migraciones] Error crítico al migrar:', err.message);
+    }
+
     // Intentar conectar a la DB después de arrancar
     attemptDbConnection();
 });
