@@ -10,7 +10,12 @@ exports.getDbStatus = async (req, res) => {
         // 2. Obtener versión de MySQL
         const [version] = await pool.query('SELECT VERSION() as version');
         
-        // 3. Verificar archivos físicos en la carpeta db
+        // 3. Inspeccionar estructura de tablas clave
+        const [deptSchema] = await pool.query('DESCRIBE departments');
+        const [rolesSchema] = await pool.query('DESCRIBE employee_roles').catch(() => [[]]);
+        const [empSchema] = await pool.query('DESCRIBE employees').catch(() => [[]]);
+        
+        // 4. Verificar archivos físicos en la carpeta db
         const dbDir = path.join(__dirname, '../db');
         let dbFiles = [];
         if (fs.existsSync(dbDir)) {
