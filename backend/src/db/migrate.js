@@ -1,24 +1,11 @@
-require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const fs = require('fs');
 const path = require('path');
-const mysql = require('mysql2/promise');
+const { pool } = require('./connection');
 
 async function migrate() {
     console.log('🔄 Ejecutando migraciones de base de datos...');
-    let connection;
     try {
-        const dbConfig = process.env.MYSQL_URL || process.env.DATABASE_URL || {
-            host: process.env.DB_HOST || 'localhost',
-            port: process.env.DB_PORT || 3306,
-            user: process.env.DB_USER || 'root',
-            password: process.env.DB_PASSWORD || '',
-            database: process.env.DB_NAME || 'metal_parts_db'
-        };
-        const connectionConfig = typeof dbConfig === 'string'
-            ? { uri: dbConfig, multipleStatements: true }
-            : { ...dbConfig, multipleStatements: true };
-
-        connection = await mysql.createConnection(connectionConfig);
+        const connection = pool;
 
         // Helper para ejecutar archivos SQL sentencia por sentencia
         const runSqlFile = async (fileName) => {

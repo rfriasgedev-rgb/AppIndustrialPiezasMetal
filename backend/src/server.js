@@ -15,21 +15,30 @@ app.get('/', (req, res) => {
 
 // Inicia el servidor HTTP escuchando en 0.0.0.0 para compatibilidad con Railway
 const HOST = '0.0.0.0';
-app.listen(PORT, HOST, async () => {
-    console.log(`🚀 [API] Servidor HTTP corriendo en http://${HOST}:${PORT}`);
-    console.log(`📦 [Ambiente] ${process.env.NODE_ENV || 'development'}`);
+
+async function startServer() {
+    console.log('📦 Iniciando proceso de arranque...');
     
-    // Ejecutar migraciones antes de marcar como lista
+    // 1. Ejecutar migraciones ANTES que cualquier otra cosa
     try {
+        console.log('🔄 Ejecutando reparaciones de base de datos...');
         await migrate();
         console.log('✅ [Migraciones] Verificadas y aplicadas.');
     } catch (err) {
         console.error('❌ [Migraciones] Error crítico al migrar:', err.message);
     }
 
-    // Intentar conectar a la DB después de arrancar
-    attemptDbConnection();
-});
+    // 2. Intentar conexión y marcar como lista
+    await attemptDbConnection();
+
+    // 3. Abrir puertos
+    app.listen(PORT, HOST, () => {
+        console.log(`🚀 [API] Servidor HTTP corriendo en http://${HOST}:${PORT}`);
+        console.log(`📦 [Ambiente] ${process.env.NODE_ENV || 'development'}`);
+    });
+}
+
+startServer();
 
 async function attemptDbConnection(retries = 15, delay = 5000) {
     for (let i = 1; i <= retries; i++) {
