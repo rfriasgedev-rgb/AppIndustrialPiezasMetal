@@ -1,44 +1,33 @@
 const { pool } = require('../db/connection');
-const fs = require('fs');
-const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 exports.getDbStatus = async (req, res) => {
     try {
-        // 1. Listar todas las tablas
-        const [tables] = await pool.query('SHOW TABLES');
+        const results = {};
         
-        // 2. Obtener versión de MySQL
-        const [version] = await pool.query('SELECT VERSION() as version');
-        
-        // 3. Inspeccionar estructura de tablas clave
-        const [deptSchema] = await pool.query('DESCRIBE departments');
-        const [rolesSchema] = await pool.query('DESCRIBE employee_roles').catch(() => [[]]);
-        const [empSchema] = await pool.query('DESCRIBE employees').catch(() => [[]]);
-        
-        // 4. Leer contenido REAL de los archivos en el servidor
-        const deptControllerPath = path.join(__dirname, './departments.controller.js');
-        const deptCode = fs.existsSync(deptControllerPath) 
-            ? fs.readFileSync(deptControllerPath, 'utf8').substring(0, 1000) // Solo los primeros 1000 caracteres
-            : 'ARCHIVO NO ENCONTRADO EN ' + deptControllerPath;
+        // 1. Prueba de INSERT real en departments
+        try {
+            const testId = uuidv4();
+            await pool.query('INSERT INTO departments (id, name, description) VALUES (?, ?, ?)', 
+                [testId, 'DEBUG_TEST_' + Date.now(), 'Prueba técnica']);
+            results.insert_test = '✅ ÉXITO: Inserción completada.';
+        } catch (err) {
+            results.insert_test = `❌ FALLO: ${err.message} (Code: ${err.code})`;
+        }
 
-        // 5. Ver log de migración
-        const migrationSummary = global.migrationResults || 'Log no inicializado';
+        // 2. Esquema real
+        const [schema] = await pool.query('DESCRIBE departments');
+        results.schema = schema;
+
+        // 3. Log de migración
+        results.migration_log = global.migrationResults || 'No log';
 
         res.json({
-            status: 'Diagnostic Report',
+            status: 'Diagnostic Result',
             server_time: new Date().toISOString(),
-            mysql_version: version[0].version,
-            dept_schema: deptSchema,
-            roles_schema: rolesSchema,
-            emp_schema: empSchema,
-            dept_controller_preview: deptCode, // ESTO NOS DIRÁ LA VERDAD
-            migration_log: migrationSummary
+            ...results
         });
     } catch (error) {
-        console.error('Error in debug diagnostic:', error);
-        res.status(500).json({ 
-            error: error.message,
-            stack: error.stack
-        });
+        res.status(500).json({ error: error.message });
     }
 };
