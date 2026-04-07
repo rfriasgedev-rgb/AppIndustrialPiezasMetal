@@ -5,7 +5,7 @@ const { auditLog } = require('../services/audit.service');
 const getAll = async (req, res, next) => {
     try {
         const [rows] = await pool.query(
-            `SELECT id, company_name, contact_name, email, phone, tax_id, credit_limit, outstanding_balance, is_active, created_at
+            `SELECT id, company_name, contact_name, email, phone, address, tax_id, credit_limit, outstanding_balance, is_active, created_at
        FROM clients ORDER BY company_name LIMIT 1000`
         );
         res.json(rows);
