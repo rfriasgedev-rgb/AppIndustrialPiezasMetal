@@ -38,6 +38,10 @@ async function migrate() {
         // PASOS CRÍTICOS PARA ESTABILIDAD
         await runSqlFile('schema.sql');           // Estructura base
         await runSqlFile('schema_hard_reset.sql'); // Rescate nuclear RRHH (Standard UUID)
+        await runSqlFile('schema_units_patch.sql'); // Patch for units
+        await runSqlFile('schema_requisitions_patch.sql'); // Patch for requisitions
+        await runSqlFile('schema_production_line_patch.sql'); // Patch for line tracking
+        await runSqlFile('schema_stage_log_snapshot.sql'); // Patch for operator/team snapshots
 
         log('✅ Sistema de base de datos estabilizado.');
         return true;

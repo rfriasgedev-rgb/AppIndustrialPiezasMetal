@@ -22,13 +22,25 @@ export default function WorkQueue() {
     const [selectedStage, setSelectedStage] = useState('DESIGN');
     const [queue, setQueue] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [productionLines, setProductionLines] = useState([]);
+    const [selectedLines, setSelectedLines] = useState({});
     
     // Si el usuario pertenece a un departamento, pre-seleccionamos su etapa lógica si quisiéramos implementarlo auto,
     // pero permitimos cambiar la tab para flexibilidad.
     
     useEffect(() => {
         loadQueue(selectedStage);
+        loadProductionLines();
     }, [selectedStage]);
+
+    const loadProductionLines = async () => {
+        try {
+            const res = await API.get('/production-lines');
+            setProductionLines(res.data);
+        } catch (error) {
+            console.error('Error cargando líneas de producción', error);
+        }
+    };
 
     const loadQueue = async (stage) => {
         setLoading(true);
@@ -43,11 +55,23 @@ export default function WorkQueue() {
     };
 
     const handleAdvance = async (item, nextStage) => {
+        if (nextStage === 'READY') {
+            const lineId = selectedLines[item.id];
+            if (!lineId) {
+                toast.warning('Por favor, selecciona la Línea de Producción que empacó la orden antes de finalizar.');
+                return;
+            }
+        }
+
         const notes = window.prompt(`Notas para avanzar pieza de ${item.product_name} a ${STAGES[nextStage]}:\n(Opcional)`);
         if (notes === null) return; // Cancelado
         
         try {
-            await API.put(`/production/${item.id}/advance`, { to_status: nextStage, notes });
+            const payload = { to_status: nextStage, notes };
+            if (nextStage === 'READY') {
+                payload.production_line_id = selectedLines[item.id];
+            }
+            await API.put(`/production/${item.id}/advance`, payload);
             toast.success('Pieza avanzada exitosamente.');
             loadQueue(selectedStage);
         } catch (err) {
@@ -117,7 +141,7 @@ export default function WorkQueue() {
                                         <hr />
                                         
                                         <p className="mb-2 font-weight-bold text-sm">Avance a siguiente etapa:</p>
-                                        <div className="d-flex flex-wrap gap-2">
+                                        <div className="d-flex flex-wrap gap-2 align-items-center">
                                             {selectedStage === 'CUTTING' && (
                                                 <button 
                                                     className="btn btn-sm btn-info mr-2 mb-2"
@@ -128,13 +152,27 @@ export default function WorkQueue() {
                                                 </button>
                                             )}
                                             {(NEXT_AVAILABLE_STAGES[selectedStage] || []).map(next => (
-                                                <button 
-                                                    key={next} 
-                                                    className="btn btn-sm btn-outline-success mr-2 mb-2"
-                                                    onClick={() => handleAdvance(item, next)}
-                                                >
-                                                    {next === 'READY' ? 'Finalizar Producción' : `Pasar a ${STAGES[next]}`} <i className="fas fa-arrow-right ml-1"></i>
-                                                </button>
+                                                <div key={next} className="d-flex align-items-center mb-2">
+                                                    {next === 'READY' && selectedStage === 'CLEANING' && (
+                                                        <select 
+                                                            className="form-control form-control-sm mr-2" 
+                                                            style={{width: '200px', display: 'inline-block'}}
+                                                            value={selectedLines[item.id] || ''}
+                                                            onChange={(e) => setSelectedLines({...selectedLines, [item.id]: e.target.value})}
+                                                        >
+                                                            <option value="">-- Seleccionar Línea --</option>
+                                                            {productionLines.map(pl => (
+                                                                <option key={pl.id} value={pl.id}>{pl.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+                                                    <button 
+                                                        className="btn btn-sm btn-outline-success mr-2"
+                                                        onClick={() => handleAdvance(item, next)}
+                                                    >
+                                                        {next === 'READY' ? 'Finalizar Producción' : `Pasar a ${STAGES[next]}`} <i className="fas fa-arrow-right ml-1"></i>
+                                                    </button>
+                                                </div>
                                             ))}
                                             {/* El botón Cancelar/Merma ha sido retirado de esta vista */}
                                         </div>

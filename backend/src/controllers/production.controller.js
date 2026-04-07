@@ -129,7 +129,14 @@ const advanceStage = async (req, res, next) => {
         await conn.beginTransaction();
         // NOTA: 'id' aquí es el order_detail_id, NO la orden padre.
         const { id } = req.params;
-        const { to_status, notes } = req.body;
+        const { to_status, notes, production_line_id } = req.body;
+
+        const [userRows] = await conn.query(
+            'SELECT u.full_name, r.name as role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.id = ?', 
+            [req.user.id]
+        );
+        const operatorName = userRows[0]?.full_name || 'Desconocido';
+        const operatorRole = userRows[0]?.role_name || '';
 
         const [[detail]] = await conn.query('SELECT * FROM production_order_details WHERE id = ? FOR UPDATE', [id]);
         if (!detail) { await conn.rollback(); return res.status(404).json({ error: 'Item de orden no encontrado.' }); }
@@ -147,20 +154,52 @@ const advanceStage = async (req, res, next) => {
             return res.status(409).json({ error: 'Esta pieza no requiere ensamblaje.' });
         }
 
+        // Validate production_line_id if finishing production
+        if (to_status === 'READY' && !production_line_id) {
+            await conn.rollback();
+            return res.status(400).json({ error: 'Debe seleccionar una línea de producción que realizó el empaque y envío.' });
+        }
+
         // Marcar etapa log anterior como completada
         await conn.query(
             `UPDATE production_stage_log SET stage_completed_at = NOW() WHERE order_detail_id = ? AND stage_completed_at IS NULL`,
             [id]
         );
 
-        // Actualizar stage en el Detail
-        await conn.query('UPDATE production_order_details SET stage = ?, updated_at = NOW() WHERE id = ?', [to_status, id]);
+        // Actualizar stage en el Detail (y linea de produccion si aplica)
+        if (production_line_id) {
+            await conn.query('UPDATE production_order_details SET stage = ?, production_line_id = ?, updated_at = NOW() WHERE id = ?', [to_status, production_line_id, id]);
+        } else {
+            await conn.query('UPDATE production_order_details SET stage = ?, updated_at = NOW() WHERE id = ?', [to_status, id]);
+        }
 
-        // Insertar nuevo Log
+        // Insertar nuevo Log con snapshot de operador
+        const logId = uuidv4();
         await conn.query(
-            `INSERT INTO production_stage_log (id, order_detail_id, from_status, to_status, notes, performed_by) VALUES (?,?,?,?,?,?)`,
-            [uuidv4(), id, detail.stage, to_status, notes, req.user.id]
+            `INSERT INTO production_stage_log (id, order_detail_id, from_status, to_status, notes, performed_by, operator_name, operator_role) VALUES (?,?,?,?,?,?,?,?)`,
+            [logId, id, detail.stage, to_status, notes, req.user.id, operatorName, operatorRole]
         );
+
+        // Snapshot del equipo de la Línea de Producción si aplica
+        if (to_status === 'READY' && production_line_id) {
+            const [lineEmployees] = await conn.query(`
+                SELECT e.first_name, e.last_name, er.name as role_name 
+                FROM production_line_employees ple
+                JOIN employees e ON ple.employee_id = e.id
+                LEFT JOIN employee_roles er ON e.employee_role_id = er.id
+                WHERE ple.line_id = ?
+            `, [production_line_id]);
+
+            if (lineEmployees.length > 0) {
+                const teamValues = lineEmployees.map(emp => [
+                    uuidv4(), logId, `${emp.first_name} ${emp.last_name}`, emp.role_name || ''
+                ]);
+                await conn.query(
+                    `INSERT INTO production_stage_log_team (id, production_stage_log_id, employee_name, employee_role) VALUES ?`,
+                    [teamValues]
+                );
+            }
+        }
 
         // -- MÁQUINA DE ESTADOS DEL PADRE --
         // Evaluar si TODAS las piezas están listas para marcar la orden padre como Entregada o Preparada.
