@@ -97,11 +97,12 @@ exports.update = async (req, res) => {
         connection = await pool.getConnection();
         await connection.beginTransaction();
         const leaderId = leader_employee_id || null;
-        const [result] = await connection.query('UPDATE production_lines SET name = ?, description = ?, leader_employee_id = ? WHERE id = ?', [name, description, leaderId, lineId]);
-        if (result.affectedRows === 0) {
+        const [old] = await connection.query('SELECT id FROM production_lines WHERE id = ?', [lineId]);
+        if (!old.length) {
             await connection.rollback();
             return res.status(404).json({ error: 'Production line not found' });
         }
+        await connection.query('UPDATE production_lines SET name = ?, description = ?, leader_employee_id = ? WHERE id = ?', [name, description, leaderId, lineId]);
         if (employee_ids !== undefined && Array.isArray(employee_ids)) {
             await connection.query('DELETE FROM production_line_employees WHERE line_id = ?', [lineId]);
             if (employee_ids.length > 0) {
