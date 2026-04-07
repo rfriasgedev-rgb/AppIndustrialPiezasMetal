@@ -19,12 +19,14 @@ const getById = async (req, res, next) => {
         const [rows] = await pool.query('SELECT * FROM product_catalog WHERE id = ?', [req.params.id]);
         if (!rows.length) return res.status(404).json({ error: 'Producto no encontrado.' });
 
-        // Cargar Lista de Materiales (BOM)
+        // Cargar Lista de Materiales (BOM) con su unidad de medida correcta
         const [materials] = await pool.query(
-            `SELECT pm.item_id, pm.quantity_required, i.name, i.sku as part_number, c.unit_of_measure as unit_measure 
+            `SELECT pm.item_id, pm.quantity_required, i.name, i.sku as part_number, 
+                    COALESCE(u.abbreviation, c.unit_of_measure) as unit_measure 
              FROM product_materials pm 
              JOIN inventory_items i ON pm.item_id = i.id 
-             LEFT JOIN material_categories c ON i.category_id = c.id
+             JOIN material_categories c ON i.category_id = c.id
+             LEFT JOIN measurement_units u ON i.unit_of_measure_id = u.id
              WHERE pm.product_id = ?`,
             [req.params.id]
         );

@@ -120,16 +120,17 @@ const generateRequisitionPDF = async (req, res, next) => {
         `, [data.production_order_id]);
 
         // Fetch Detalles y unirlos con items e inventario
-        const [details] = await pool.query(`
+            const [details] = await pool.query(`
             SELECT 
                 rd.quantity_requested, 
                 i.name as item_name, 
                 i.sku as part_number,
-                cat.unit_of_measure,
+                COALESCE(u.abbreviation, cat.unit_of_measure) as unit_of_measure,
                 i.location
             FROM requisition_details rd
             JOIN inventory_items i ON rd.item_id = i.id
             JOIN material_categories cat ON i.category_id = cat.id
+            LEFT JOIN measurement_units u ON i.unit_of_measure_id = u.id
             WHERE rd.requisition_id = ?
             ORDER BY i.name
         `, [id]);
