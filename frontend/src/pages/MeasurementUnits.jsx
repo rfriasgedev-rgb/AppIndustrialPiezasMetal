@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import API from '../api/client';
 import Swal from 'sweetalert2';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 export default function MeasurementUnits() {
+    const { t } = useTranslation();
     const [units, setUnits] = useState([]);
     const [loading, setLoading] = useState(true);
     const { hasRole } = useAuth();
@@ -17,7 +19,7 @@ export default function MeasurementUnits() {
             setUnits(res.data);
             setLoading(false);
         }).catch(() => {
-            Swal.fire('Error', 'No se pudieron cargar las unidades de medida', 'error');
+            Swal.fire(t('measurementUnits.saveErrorTitle'), t('measurementUnits.loadError'), 'error');
             setLoading(false);
         });
     };
@@ -41,52 +43,52 @@ export default function MeasurementUnits() {
         try {
             if (isEditing) {
                 await API.put(`/units/${form.id}`, form);
-                Swal.fire('Guardado', 'Unidad de medida actualizada.', 'success');
+                Swal.fire(t('measurementUnits.updateSuccessTitle'), t('measurementUnits.updateSuccessText'), 'success');
             } else {
                 await API.post('/units', form);
-                Swal.fire('Creado', 'Nueva unidad de medida agregada.', 'success');
+                Swal.fire(t('measurementUnits.createSuccessTitle'), t('measurementUnits.createSuccessText'), 'success');
             }
             setShowModal(false);
             fetchData();
         } catch (err) {
-            Swal.fire('Error', err.response?.data?.error || 'Error al guardar.', 'error');
+            Swal.fire(t('measurementUnits.saveErrorTitle'), err.response?.data?.error || t('measurementUnits.saveErrorText'), 'error');
         }
     };
 
     const handleDelete = async (unit) => {
         const result = await Swal.fire({
-            title: '¿Estás seguro?',
-            text: `¿Eliminar "${unit.name}"? Los materiales asociados podrían verse afectados.`,
+            title: t('measurementUnits.deleteConfirmTitle'),
+            text: t('measurementUnits.deleteConfirmText', { name: unit.name }),
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
+            confirmButtonText: t('measurementUnits.btnYesDelete'),
+            cancelButtonText: t('measurementUnits.btnCancel')
         });
 
         if (result.isConfirmed) {
             try {
                 await API.delete(`/units/${unit.id}`);
-                Swal.fire('Eliminado', 'La unidad de medida ha sido borrada.', 'success');
+                Swal.fire(t('measurementUnits.deleteSuccessTitle'), t('measurementUnits.deleteSuccessText'), 'success');
                 fetchData();
             } catch (err) {
-                Swal.fire('Error', err.response?.data?.error || 'Error al eliminar. Verifique que no haya items usando esta unidad.', 'error');
+                Swal.fire(t('measurementUnits.deleteErrorTitle'), err.response?.data?.error || t('measurementUnits.deleteErrorText'), 'error');
             }
         }
     };
 
-    if (!hasRole('ADMIN')) return <div className="p-5 text-center text-danger">Acceso Denegado</div>;
+    if (!hasRole('ADMIN')) return <div className="p-5 text-center text-danger">{t('measurementUnits.accessDenied')}</div>;
 
     return (
         <>
             <div className="content-header mb-3 d-flex align-items-center justify-content-between">
                 <div>
-                    <h1 style={{ fontWeight: 700 }}><i className="fas fa-ruler-combined mr-2 text-danger"></i>Unidades de Medida</h1>
-                    <small className="text-muted">Gestión de magnitudes base del sistema inventario</small>
+                    <h1 style={{ fontWeight: 700 }}><i className="fas fa-ruler-combined mr-2 text-danger"></i>{t('measurementUnits.pageTitle')}</h1>
+                    <small className="text-muted">{t('measurementUnits.pageSubtitle')}</small>
                 </div>
                 <button className="btn btn-danger" onClick={openCreateModal}>
-                    <i className="fas fa-plus mr-1"></i> Nueva Unidad
+                    <i className="fas fa-plus mr-1"></i> {t('measurementUnits.btnNew')}
                 </button>
             </div>
 
@@ -96,9 +98,9 @@ export default function MeasurementUnits() {
                         <table className="table table-hover mb-0">
                             <thead style={{ background: '#1a1a2e', color: '#fff' }}>
                                 <tr>
-                                    <th>Unidad</th>
-                                    <th>Abreviatura / Símbolo</th>
-                                    <th className="text-center">Acciones</th>
+                                    <th>{t('measurementUnits.colUnit')}</th>
+                                    <th>{t('measurementUnits.colAbbr')}</th>
+                                    <th className="text-center">{t('measurementUnits.colActions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -123,25 +125,25 @@ export default function MeasurementUnits() {
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content" style={{ borderRadius: '12px' }}>
                             <div className="modal-header" style={{ background: '#1a1a2e', color: '#fff', borderRadius: '12px 12px 0 0' }}>
-                                <h5 className="modal-title">{isEditing ? 'Editar Unidad' : 'Nueva Unidad de Medida'}</h5>
+                                <h5 className="modal-title">{isEditing ? t('measurementUnits.modalEditTitle') : t('measurementUnits.modalNewTitle')}</h5>
                                 <button type="button" className="close text-white" onClick={() => setShowModal(false)}><span>&times;</span></button>
                             </div>
                             <form onSubmit={handleSave}>
                                 <div className="modal-body">
                                     <div className="form-group">
-                                        <label>Nombre Completo <span className="text-danger">*</span></label>
-                                        <input type="text" className="form-control" required placeholder="Ej: Centímetros Cúbicos"
+                                        <label>{t('measurementUnits.lblName')} <span className="text-danger">*</span></label>
+                                        <input type="text" className="form-control" required placeholder={t('measurementUnits.namePlaceholder')}
                                             value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                                     </div>
                                     <div className="form-group">
-                                        <label>Abreviatura Oficial <span className="text-danger">*</span></label>
-                                        <input type="text" className="form-control" required placeholder="Ej: cm3"
+                                        <label>{t('measurementUnits.lblAbbr')} <span className="text-danger">*</span></label>
+                                        <input type="text" className="form-control" required placeholder={t('measurementUnits.abbrPlaceholder')}
                                             value={form.abbreviation} onChange={e => setForm({ ...form, abbreviation: e.target.value })} />
                                     </div>
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-                                    <button type="submit" className="btn btn-danger"><i className="fas fa-save mr-1"></i>{isEditing ? 'Guardar' : 'Crear'}</button>
+                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{t('measurementUnits.btnCancel')}</button>
+                                    <button type="submit" className="btn btn-danger"><i className="fas fa-save mr-1"></i>{isEditing ? t('measurementUnits.btnSaveEdit') : t('measurementUnits.btnCreate')}</button>
                                 </div>
                             </form>
                         </div>

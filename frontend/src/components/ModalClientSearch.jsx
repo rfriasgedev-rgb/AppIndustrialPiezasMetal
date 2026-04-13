@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/client';
+import { useTranslation } from 'react-i18next';
 
 export default function ModalClientSearch({ show, onClose, onSelect }) {
+    const { t } = useTranslation();
     const [clients, setClients] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
@@ -50,7 +52,7 @@ export default function ModalClientSearch({ show, onClose, onSelect }) {
                     {/* Header */}
                     <div className="modal-header" style={{ background: '#16213e', color: '#fff', borderRadius: '12px 12px 0 0' }}>
                         <h5 className="modal-title font-weight-bold">
-                            <i className="fas fa-search mr-2 text-danger"></i> Buscar Cliente
+                            <i className="fas fa-search mr-2 text-danger"></i> {t('modalClientSearch.title')}
                         </h5>
                         <button type="button" className="close text-white" onClick={onClose}>
                             <span>&times;</span>
@@ -67,7 +69,7 @@ export default function ModalClientSearch({ show, onClose, onSelect }) {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    placeholder="Buscar por Razón Social o RIF/NIT..."
+                                    placeholder={t('modalClientSearch.placeholder')}
                                     value={searchTerm}
                                     onChange={handleSearch}
                                     autoFocus
@@ -83,9 +85,9 @@ export default function ModalClientSearch({ show, onClose, onSelect }) {
                                 <table className="table table-hover table-striped mb-0">
                                     <thead className="thead-light sticky-top">
                                         <tr>
-                                            <th>Razón Social</th>
-                                            <th>Identificación Tributaria</th>
-                                            <th className="text-center">Acción</th>
+                                            <th>{t('modalClientSearch.colName')}</th>
+                                            <th>{t('modalClientSearch.colTaxId')}</th>
+                                            <th className="text-center">{t('modalClientSearch.colAction')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -94,14 +96,14 @@ export default function ModalClientSearch({ show, onClose, onSelect }) {
                                                 <td className="align-middle">
                                                     <strong>{c.company_name}</strong>
                                                 </td>
-                                                <td className="align-middle text-muted">{c.tax_id || 'N/A'}</td>
+                                                <td className="align-middle text-muted">{c.tax_id || t('modalClientSearch.na')}</td>
                                                 <td className="align-middle text-center">
                                                     <button
                                                         className="btn btn-sm btn-outline-danger"
                                                         style={{ borderRadius: '20px', fontWeight: 'bold' }}
                                                         onClick={() => onSelect(c)}
                                                     >
-                                                        <i className="fas fa-check mr-1"></i> Seleccionar
+                                                        <i className="fas fa-check mr-1"></i> {t('modalClientSearch.btnSelect')}
                                                     </button>
                                                 </td>
                                             </tr>
@@ -111,7 +113,7 @@ export default function ModalClientSearch({ show, onClose, onSelect }) {
                             ) : (
                                 <div className="text-center p-5 text-muted">
                                     <i className="fas fa-box-open fa-3x mb-3 text-light"></i>
-                                    <h5>No se encontraron clientes</h5>
+                                    <h5>{t('modalClientSearch.noClients')}</h5>
                                 </div>
                             )}
                         </div>

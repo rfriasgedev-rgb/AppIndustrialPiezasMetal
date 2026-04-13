@@ -3,8 +3,10 @@ import API from '../api/client';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 export default function MaterialCategories() {
+    const { t } = useTranslation();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const { hasRole } = useAuth();
@@ -22,7 +24,7 @@ export default function MaterialCategories() {
                 setLoading(false);
             })
             .catch(err => {
-                toast.error('Error cargando categorías.');
+                toast.error(t('materialCategories.loadError'));
                 setLoading(false);
             });
     };
@@ -53,36 +55,37 @@ export default function MaterialCategories() {
         try {
             if (isEditing) {
                 await API.put(`/categories/${form.id}`, form);
-                toast.success('Categoría actualizada.');
+                toast.success(t('materialCategories.updateSuccess'));
             } else {
                 await API.post('/categories', form);
-                toast.success('Categoría creada exitosamente.');
+                toast.success(t('materialCategories.createSuccess'));
             }
             setShowModal(false);
             fetchCategories();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Error al guardar categoría.');
+            toast.error(err.response?.data?.error || t('materialCategories.saveError'));
         }
     };
 
     const handleDelete = async (id, name) => {
         const result = await Swal.fire({
-            title: '¿Confirmar eliminación?',
-            text: `¿Eliminar permanentemente la categoría "${name}"?`,
+            title: t('materialCategories.deleteConfirmTitle'),
+            text: t('materialCategories.deleteConfirmText', { name }),
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Eliminar'
+            confirmButtonText: t('materialCategories.btnDelete'),
+            cancelButtonText: t('materialCategories.btnCancel')
         });
 
         if (result.isConfirmed) {
             try {
                 await API.delete(`/categories/${id}`);
-                Swal.fire('Eliminado', 'Categoría eliminada.', 'success');
+                Swal.fire(t('materialCategories.deleteSuccessTitle'), t('materialCategories.deleteSuccessText'), 'success');
                 fetchCategories();
             } catch (err) {
-                Swal.fire('Error', err.response?.data?.error || 'No se pudo eliminar.', 'error');
+                Swal.fire(t('materialCategories.deleteErrorTitle'), err.response?.data?.error || t('materialCategories.saveError'), 'error');
             }
         }
     };
@@ -91,12 +94,12 @@ export default function MaterialCategories() {
         <>
             <div className="content-header mb-3 d-flex align-items-center justify-content-between">
                 <div>
-                    <h1 style={{ fontWeight: 700 }}><i className="fas fa-cubes mr-2" style={{ color: '#e94560' }}></i>Categorías de Material</h1>
-                    <small className="text-muted">Administración de Familias de Materia Prima</small>
+                    <h1 style={{ fontWeight: 700 }}><i className="fas fa-cubes mr-2" style={{ color: '#e94560' }}></i>{t('materialCategories.pageTitle')}</h1>
+                    <small className="text-muted">{t('materialCategories.pageSubtitle')}</small>
                 </div>
                 {hasRole('ADMIN') && (
                     <button className="btn btn-danger" onClick={openCreateModal}>
-                        <i className="fas fa-plus mr-1"></i> Nueva Categoría
+                        <i className="fas fa-plus mr-1"></i> {t('materialCategories.btnNew')}
                     </button>
                 )}
             </div>
@@ -107,24 +110,24 @@ export default function MaterialCategories() {
                         <table className="table table-hover mb-0">
                             <thead style={{ background: '#1a1a2e', color: '#fff' }}>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Nombre de Categoría</th>
-                                    <th>Descripción</th>
-                                    <th>Unidad Base Predeterminada</th>
-                                    {hasRole('ADMIN') && <th className="text-center">Acciones</th>}
+                                    <th>{t('materialCategories.colId')}</th>
+                                    <th>{t('materialCategories.colName')}</th>
+                                    <th>{t('materialCategories.colDesc')}</th>
+                                    <th>{t('materialCategories.colUnit')}</th>
+                                    {hasRole('ADMIN') && <th className="text-center">{t('materialCategories.colActions')}</th>}
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
                                     <tr><td colSpan="5" className="text-center py-4"><i className="fas fa-spinner fa-spin text-secondary"></i></td></tr>
                                 ) : categories.length === 0 ? (
-                                    <tr><td colSpan="5" className="text-center py-4 text-muted">No hay categorías registradas.</td></tr>
+                                    <tr><td colSpan="5" className="text-center py-4 text-muted">{t('materialCategories.noRecords')}</td></tr>
                                 ) : (
                                     categories.map(cat => (
                                         <tr key={cat.id}>
                                             <td className="text-muted">{cat.id}</td>
                                             <td><strong>{cat.name}</strong></td>
-                                            <td>{cat.description || <span className="text-muted italic">Sin descripción</span>}</td>
+                                            <td>{cat.description || <span className="text-muted italic">{t('materialCategories.noDesc')}</span>}</td>
                                             <td><span className="badge badge-secondary">{cat.unit_of_measure}</span></td>
                                             {hasRole('ADMIN') && (
                                                 <td className="text-center">
@@ -151,28 +154,28 @@ export default function MaterialCategories() {
                     <div className="modal-dialog">
                         <div className="modal-content" style={{ borderRadius: '12px' }}>
                             <div className="modal-header" style={{ background: '#1a1a2e', color: '#fff', borderRadius: '12px 12px 0 0' }}>
-                                <h5 className="modal-title">{isEditing ? 'Editar Categoría' : 'Nueva Categoría'}</h5>
+                                <h5 className="modal-title">{isEditing ? t('materialCategories.modalEditTitle') : t('materialCategories.modalNewTitle')}</h5>
                                 <button type="button" className="close text-white" onClick={() => setShowModal(false)}>&times;</button>
                             </div>
                             <form onSubmit={handleSave}>
                                 <div className="modal-body">
                                     <div className="form-group mb-3">
-                                        <label>Nombre <span className="text-danger">*</span></label>
-                                        <input type="text" className="form-control" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ej: Acero" />
+                                        <label>{t('materialCategories.lblName')} <span className="text-danger">*</span></label>
+                                        <input type="text" className="form-control" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder={t('materialCategories.namePlaceholder')} />
                                     </div>
                                     <div className="form-group mb-3">
-                                        <label>Descripción</label>
+                                        <label>{t('materialCategories.lblDescription')}</label>
                                         <textarea className="form-control" rows="2" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}></textarea>
                                     </div>
                                     <div className="form-group mb-3">
-                                        <label>Unidad de Medida (Antigua ref.) <span className="text-danger">*</span></label>
-                                        <input type="text" className="form-control" required value={form.unit_of_measure} onChange={e => setForm({ ...form, unit_of_measure: e.target.value })} placeholder="Ej: kg" />
-                                        <small className="text-muted">Valor por defecto si el material no trae una unidad en ID, requerimiento legacy.</small>
+                                        <label>{t('materialCategories.lblUnit')} <span className="text-danger">*</span></label>
+                                        <input type="text" className="form-control" required value={form.unit_of_measure} onChange={e => setForm({ ...form, unit_of_measure: e.target.value })} placeholder={t('materialCategories.unitPlaceholder')} />
+                                        <small className="text-muted">{t('materialCategories.unitHelp')}</small>
                                     </div>
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-                                    <button type="submit" className="btn btn-danger"><i className="fas fa-save mr-1"></i>Guardar</button>
+                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{t('materialCategories.btnCancel')}</button>
+                                    <button type="submit" className="btn btn-danger"><i className="fas fa-save mr-1"></i>{t('materialCategories.btnSave')}</button>
                                 </div>
                             </form>
                         </div>

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/client';
+import { useTranslation } from 'react-i18next';
 
 export default function ModalProductSearch({ show, onClose, onSelect }) {
+    const { t } = useTranslation();
     const [products, setProducts] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
@@ -49,7 +51,7 @@ export default function ModalProductSearch({ show, onClose, onSelect }) {
                     {/* Header */}
                     <div className="modal-header" style={{ background: '#16213e', color: '#fff', borderRadius: '12px 12px 0 0' }}>
                         <h5 className="modal-title font-weight-bold">
-                            <i className="fas fa-cubes mr-2 text-danger"></i> Catálogo Maestro de Piezas
+                            <i className="fas fa-cubes mr-2 text-danger"></i> {t('modalProductSearch.title')}
                         </h5>
                         <button type="button" className="close text-white" onClick={onClose}>
                             <span>&times;</span>
@@ -66,7 +68,7 @@ export default function ModalProductSearch({ show, onClose, onSelect }) {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    placeholder="Buscar por Nombre de Pieza, Número de Parte o Descripción Técnica..."
+                                    placeholder={t('modalProductSearch.placeholder')}
                                     value={searchTerm}
                                     onChange={handleSearch}
                                     autoFocus
@@ -82,23 +84,23 @@ export default function ModalProductSearch({ show, onClose, onSelect }) {
                                 <table className="table table-hover table-striped mb-0">
                                     <thead className="thead-light sticky-top" style={{ zIndex: 1 }}>
                                         <tr>
-                                            <th style={{ width: '15%' }}>No. Parte</th>
-                                            <th style={{ width: '30%' }}>Nombre de Pieza</th>
-                                            <th style={{ width: '35%' }}>Descripción Breve</th>
-                                            <th style={{ width: '10%' }} className="text-center">Ensamblaje</th>
-                                            <th style={{ width: '10%' }} className="text-center">Acción</th>
+                                            <th style={{ width: '15%' }}>{t('modalProductSearch.colPart')}</th>
+                                            <th style={{ width: '30%' }}>{t('modalProductSearch.colName')}</th>
+                                            <th style={{ width: '35%' }}>{t('modalProductSearch.colDesc')}</th>
+                                            <th style={{ width: '10%' }} className="text-center">{t('modalProductSearch.colAssembly')}</th>
+                                            <th style={{ width: '10%' }} className="text-center">{t('modalProductSearch.colAction')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {products.map(p => (
                                             <tr key={p.id}>
-                                                <td className="align-middle text-muted font-weight-bold">{p.part_number || 'N/A'}</td>
+                                                <td className="align-middle text-muted font-weight-bold">{p.part_number || t('modalProductSearch.na')}</td>
                                                 <td className="align-middle text-primary" style={{ fontWeight: 600 }}>{p.name}</td>
                                                 <td className="align-middle text-muted small">{p.description?.substring(0, 60)} {p.description?.length > 60 ? '...' : ''}</td>
                                                 <td className="align-middle text-center">
                                                     {p.requires_assembly ?
-                                                        <span className="badge badge-warning">Requiere</span> :
-                                                        <span className="badge badge-secondary">No</span>
+                                                        <span className="badge badge-warning">{t('modalProductSearch.badgeRequires')}</span> :
+                                                        <span className="badge badge-secondary">{t('modalProductSearch.badgeNo')}</span>
                                                     }
                                                 </td>
                                                 <td className="align-middle text-center">
@@ -107,7 +109,7 @@ export default function ModalProductSearch({ show, onClose, onSelect }) {
                                                         style={{ borderRadius: '20px', fontWeight: 'bold' }}
                                                         onClick={() => onSelect(p)}
                                                     >
-                                                        <i className="fas fa-plus mr-1"></i> Añadir
+                                                        <i className="fas fa-plus mr-1"></i> {t('modalProductSearch.btnAdd')}
                                                     </button>
                                                 </td>
                                             </tr>
@@ -117,7 +119,7 @@ export default function ModalProductSearch({ show, onClose, onSelect }) {
                             ) : (
                                 <div className="text-center p-5 text-muted">
                                     <i className="fas fa-boxes fa-3x mb-3 text-light"></i>
-                                    <h5>No se encontraron piezas en el catálogo maestro.</h5>
+                                    <h5>{t('modalProductSearch.noProducts')}</h5>
                                 </div>
                             )}
                         </div>

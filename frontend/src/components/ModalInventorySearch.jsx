@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/client';
+import { useTranslation } from 'react-i18next';
 
 export default function ModalInventorySearch({ show, onClose, onSelect }) {
+    const { t } = useTranslation();
     const [items, setItems] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
@@ -49,7 +51,7 @@ export default function ModalInventorySearch({ show, onClose, onSelect }) {
                     {/* Header */}
                     <div className="modal-header" style={{ background: '#007bff', color: '#fff', borderRadius: '12px 12px 0 0' }}>
                         <h5 className="modal-title font-weight-bold">
-                            <i className="fas fa-boxes mr-2 text-warning"></i> Inventario de Materiales
+                            <i className="fas fa-boxes mr-2 text-warning"></i> {t('modalInventorySearch.title')}
                         </h5>
                         <button type="button" className="close text-white" onClick={onClose}>
                             <span>&times;</span>
@@ -66,7 +68,7 @@ export default function ModalInventorySearch({ show, onClose, onSelect }) {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    placeholder="Buscar por Nombre del Material, Código (SKU) o Categoría..."
+                                    placeholder={t('modalInventorySearch.placeholder')}
                                     value={searchTerm}
                                     onChange={handleSearch}
                                     autoFocus
@@ -82,18 +84,18 @@ export default function ModalInventorySearch({ show, onClose, onSelect }) {
                                 <table className="table table-hover table-striped mb-0">
                                     <thead className="thead-light sticky-top" style={{ zIndex: 1 }}>
                                         <tr>
-                                            <th style={{ width: '15%' }}>No. Artículo</th>
-                                            <th style={{ width: '30%' }}>Nombre de Material</th>
-                                            <th style={{ width: '25%' }}>Categoría</th>
-                                            <th style={{ width: '10%' }} className="text-center">Stock Disp.</th>
-                                            <th style={{ width: '10%' }} className="text-center">Unidad</th>
-                                            <th style={{ width: '10%' }} className="text-center">Acción</th>
+                                            <th style={{ width: '15%' }}>{t('modalInventorySearch.colSku')}</th>
+                                            <th style={{ width: '30%' }}>{t('modalInventorySearch.colName')}</th>
+                                            <th style={{ width: '25%' }}>{t('modalInventorySearch.colCategory')}</th>
+                                            <th style={{ width: '10%' }} className="text-center">{t('modalInventorySearch.colStock')}</th>
+                                            <th style={{ width: '10%' }} className="text-center">{t('modalInventorySearch.colUnit')}</th>
+                                            <th style={{ width: '10%' }} className="text-center">{t('modalInventorySearch.colAction')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {items.map(p => (
                                             <tr key={p.id}>
-                                                <td className="align-middle text-muted font-weight-bold">{p.sku || 'N/A'}</td>
+                                                <td className="align-middle text-muted font-weight-bold">{p.sku || t('modalInventorySearch.na')}</td>
                                                 <td className="align-middle text-primary" style={{ fontWeight: 600 }}>{p.name}</td>
                                                 <td className="align-middle text-muted small">{p.category}</td>
                                                 <td className="align-middle text-center font-weight-bold">
@@ -108,7 +110,7 @@ export default function ModalInventorySearch({ show, onClose, onSelect }) {
                                                         style={{ borderRadius: '20px', fontWeight: 'bold' }}
                                                         onClick={() => onSelect(p)}
                                                     >
-                                                        <i className="fas fa-plus mr-1"></i> Añadir
+                                                        <i className="fas fa-plus mr-1"></i> {t('modalInventorySearch.btnAdd')}
                                                     </button>
                                                 </td>
                                             </tr>
@@ -118,7 +120,7 @@ export default function ModalInventorySearch({ show, onClose, onSelect }) {
                             ) : (
                                 <div className="text-center p-5 text-muted">
                                     <i className="fas fa-box-open fa-3x mb-3 text-light"></i>
-                                    <h5>No se encontraron materiales en el inventario.</h5>
+                                    <h5>{t('modalInventorySearch.noItems')}</h5>
                                 </div>
                             )}
                         </div>

@@ -1,15 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import API from '../api/client';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend } from 'chart.js';
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
-const STATUS_LABELS = {
-    DRAFT: 'Borrador', PENDING_MATERIAL: 'Esperando Material', CUTTING: 'Corte',
-    BENDING: 'Doblado', ASSEMBLY: 'Ensamblaje', WELDING: 'Soldadura', CLEANING: 'Limpieza',
-    PAINTING: 'Pintura', QUALITY_CHECK: 'Control Calidad', READY_FOR_DELIVERY: 'Listo p/Entrega',
-    DELIVERED: 'Entregado', CANCELLED: 'Cancelado', DESIGN: 'Diseño', READY: 'Lista (Pieza)'
-};
 const STATUS_COLORS = {
     DRAFT: '#6c757d', PENDING_MATERIAL: '#fd7e14', CUTTING: '#007bff',
     BENDING: '#17a2b8', ASSEMBLY: '#6f42c1', WELDING: '#fd7e14', CLEANING: '#20c997',
@@ -34,6 +29,7 @@ const StatCard = ({ icon, value, label, color }) => (
 );
 
 export default function Dashboard() {
+    const { t } = useTranslation();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -42,13 +38,13 @@ export default function Dashboard() {
     }, []);
 
     if (loading) return <div className="text-center pt-5"><i className="fas fa-spinner fa-spin fa-3x text-secondary"></i></div>;
-    if (!stats) return <div className="alert alert-danger">Error al cargar datos.</div>;
+    if (!stats) return <div className="alert alert-danger">{t('dashboard.errorData')}</div>;
 
     const { orders, ordersByStatus, itemsByStage, inventoryAlerts, inventoryTotalItems, inventoryTotalValue, criticalMaterials, totalClients, recentOrders } = stats;
 
     // Configuración del Doughnut Chart
     const doughnutData = {
-        labels: ordersByStatus.map(s => STATUS_LABELS[s.status] || s.status),
+        labels: ordersByStatus.map(s => t(`dashboard.statuses.${s.status}`, s.status)),
         datasets: [{
             data: ordersByStatus.map(s => s.count),
             backgroundColor: ordersByStatus.map(s => STATUS_COLORS[s.status] || '#999'),
@@ -63,13 +59,13 @@ export default function Dashboard() {
         labels: criticalMaterials?.map(m => m.name.substring(0, 15) + '...'),
         datasets: [
             {
-                label: 'Stock Actual',
+                label: t('dashboard.stockCurrent'),
                 data: criticalMaterials?.map(m => parseFloat(m.quantity_available)),
                 backgroundColor: '#e94560',
                 borderRadius: 4,
             },
             {
-                label: 'Punto Mínimo',
+                label: t('dashboard.minPoint'),
                 data: criticalMaterials?.map(m => parseFloat(m.reorder_point)),
                 backgroundColor: '#16213e',
                 borderRadius: 4,
@@ -87,24 +83,24 @@ export default function Dashboard() {
             </style>
 
             <div className="content-header mb-4">
-                <h1 style={{ fontWeight: 800, color: '#16213e' }}><i className="fas fa-tachometer-alt mr-2 text-danger"></i>Resumen General</h1>
-                <small className="text-muted" style={{ fontSize: '1.1rem' }}>Estado operativo de la fábrica e inventario en tiempo real.</small>
+                <h1 style={{ fontWeight: 800, color: '#16213e' }}><i className="fas fa-tachometer-alt mr-2 text-danger"></i>{t('dashboard.title')}</h1>
+                <small className="text-muted" style={{ fontSize: '1.1rem' }}>{t('dashboard.subtitle')}</small>
             </div>
 
             {/* Fila 1: KPIs de Producción y Ventas */}
             <div className="row">
-                <StatCard icon="fas fa-industry" value={orders.total} label="Órdenes Creadas" color="#0f3460" />
-                <StatCard icon="fas fa-cog fa-spin" value={orders.active} label="Órdenes en Producción" color="#e94560" />
-                <StatCard icon="fas fa-check-circle" value={orders.delivered} label="Órdenes Entregadas" color="#28a745" />
-                <StatCard icon="fas fa-users" value={totalClients} label="Base de Clientes" color="#17a2b8" />
+                <StatCard icon="fas fa-industry" value={orders.total} label={t('dashboard.createdOrders')} color="#0f3460" />
+                <StatCard icon="fas fa-cog fa-spin" value={orders.active} label={t('dashboard.activeOrders')} color="#e94560" />
+                <StatCard icon="fas fa-check-circle" value={orders.delivered} label={t('dashboard.deliveredOrders')} color="#28a745" />
+                <StatCard icon="fas fa-users" value={totalClients} label={t('dashboard.clientBase')} color="#17a2b8" />
             </div>
 
             {/* Fila 2: KPIs de Inventario */}
             <div className="row">
-                <StatCard icon="fas fa-box-open" value={inventoryTotalItems} label="Materiales Activos" color="#6f42c1" />
-                <StatCard icon="fas fa-exclamation-triangle" value={inventoryAlerts} label="Alertas de Stock" color="#fd7e14" />
-                <StatCard icon="fas fa-dollar-sign" value={`$${parseFloat(inventoryTotalValue).toFixed(2)}`} label="Valor de Inventario" color="#20c997" />
-                <StatCard icon="fas fa-times-circle" value={orders.cancelled || 0} label="Órdenes Canceladas" color="#dc3545" />
+                <StatCard icon="fas fa-box-open" value={inventoryTotalItems} label={t('dashboard.activeMaterials')} color="#6f42c1" />
+                <StatCard icon="fas fa-exclamation-triangle" value={inventoryAlerts} label={t('dashboard.stockAlerts')} color="#fd7e14" />
+                <StatCard icon="fas fa-dollar-sign" value={`$${parseFloat(inventoryTotalValue).toFixed(2)}`} label={t('dashboard.inventoryValue')} color="#20c997" />
+                <StatCard icon="fas fa-times-circle" value={orders.cancelled || 0} label={t('dashboard.cancelledOrders')} color="#dc3545" />
             </div>
 
             <div className="row mt-3">
@@ -113,7 +109,7 @@ export default function Dashboard() {
                     <div className="card h-100">
                         <div className="card-header pb-0 border-0 pt-3 bg-transparent">
                             <h3 className="card-title font-weight-bold" style={{ color: '#0f172a' }}>
-                                <i className="fas fa-chart-bar mr-2 text-danger"></i>Stock Crítico (Reabastecer)
+                                <i className="fas fa-chart-bar mr-2 text-danger"></i>{t('dashboard.criticalStockTitle')}
                             </h3>
                         </div>
                         <div className="card-body">
@@ -121,7 +117,7 @@ export default function Dashboard() {
                                 <Bar data={barData} options={{ responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }} height={250} />
                             ) : (
                                 <div className="d-flex h-100 align-items-center justify-content-center text-muted">
-                                    <span><i className="fas fa-check-circle mr-2 text-success"></i>Todo el inventario está en niveles óptimos</span>
+                                    <span><i className="fas fa-check-circle mr-2 text-success"></i>{t('dashboard.optimalStock')}</span>
                                 </div>
                             )}
                         </div>
@@ -133,7 +129,7 @@ export default function Dashboard() {
                     <div className="card h-100">
                         <div className="card-header pb-0 border-0 pt-3 bg-transparent">
                             <h3 className="card-title font-weight-bold" style={{ color: '#0f172a' }}>
-                                <i className="fas fa-project-diagram mr-2 text-primary"></i>Pipeline de Piezas en Producción
+                                <i className="fas fa-project-diagram mr-2 text-primary"></i>{t('dashboard.pipelineTitle')}
                             </h3>
                         </div>
                         <div className="card-body">
@@ -148,7 +144,7 @@ export default function Dashboard() {
                                                     {qty}
                                                 </div>
                                                 <small style={{ display: 'block', lineHeight: '1.1', color: '#666', fontWeight: 600, marginTop: '4px' }}>
-                                                    {STATUS_LABELS[st]}
+                                                    {t(`dashboard.statuses.${st}`, st)}
                                                 </small>
                                             </div>
                                             {idx < arr.length - 1 && (
@@ -169,7 +165,7 @@ export default function Dashboard() {
                     <div className="card h-100">
                         <div className="card-header pb-0 border-0 pt-3 bg-transparent">
                             <h3 className="card-title font-weight-bold" style={{ color: '#0f172a' }}>
-                                <i className="fas fa-chart-pie mr-2 text-primary"></i>Distribución de Órdenes
+                                <i className="fas fa-chart-pie mr-2 text-primary"></i>{t('dashboard.distributionTitle')}
                             </h3>
                         </div>
                         <div className="card-body">
@@ -191,7 +187,7 @@ export default function Dashboard() {
                 <div className="col-lg-12">
                     <div className="card">
                         <div className="card-header border-0 pt-3 bg-transparent">
-                            <h3 className="card-title font-weight-bold" style={{ color: '#0f172a' }}><i className="fas fa-stream mr-2 text-danger"></i>Últimas Órdenes Generadas</h3>
+                            <h3 className="card-title font-weight-bold" style={{ color: '#0f172a' }}><i className="fas fa-stream mr-2 text-danger"></i>{t('dashboard.recentOrdersTitle')}</h3>
                         </div>
                         <div className="card-body p-0">
                             <ul className="list-group list-group-flush">
@@ -210,7 +206,7 @@ export default function Dashboard() {
                                             </div>
                                             <div className="text-right">
                                                 <div className="badge" style={{ background: STATUS_COLORS[o.status] || '#999', color: '#fff', fontSize: '0.85rem', padding: '6px 12px', borderRadius: '20px' }}>
-                                                    {STATUS_LABELS[o.status] || o.status}
+                                                    {t(`dashboard.statuses.${o.status}`, o.status)}
                                                 </div>
                                                 <div className="text-muted mt-1" style={{ fontSize: '0.8rem' }}><i className="far fa-clock mr-1"></i>{dateStr}</div>
                                             </div>
@@ -218,7 +214,7 @@ export default function Dashboard() {
                                     );
                                 })}
                                 {recentOrders.length === 0 && (
-                                    <li className="list-group-item text-center p-4 text-muted">Aún no se han generado órdenes de producción.</li>
+                                    <li className="list-group-item text-center p-4 text-muted">{t('dashboard.noRecentOrders')}</li>
                                 )}
                             </ul>
                         </div>

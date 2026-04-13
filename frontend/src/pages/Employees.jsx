@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { hrService } from '../services/hr.service';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
+import { useTranslation } from 'react-i18next';
 
 export default function Employees() {
+  const { t } = useTranslation();
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [schedules, setSchedules] = useState([]);
@@ -30,7 +32,7 @@ export default function Employees() {
       setSchedules(schData);
       setRoles(roleData);
     } catch (error) {
-      toast.error('Error cargando datos');
+      toast.error(t('employees.loadError'));
     }
   };
 
@@ -39,35 +41,35 @@ export default function Employees() {
     try {
       if (formData.id) {
         await hrService.updateEmployee(formData.id, formData);
-        toast.success('Empleado actualizado');
+        toast.success(t('employees.updateSuccess'));
       } else {
         await hrService.createEmployee(formData);
-        toast.success('Empleado creado');
+        toast.success(t('employees.createSuccess'));
       }
       setShowModal(false);
       loadAllData();
     } catch (error) {
-       toast.error(error.response?.data?.error || 'Error al guardar');
+       toast.error(error.response?.data?.error || t('employees.saveError'));
     }
   };
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-      title: '¿Eliminar empleado?',
-      text: "Esta acción lo eliminará del sistema",
+      title: t('employees.deleteConfirmTitle'),
+      text: t('employees.deleteConfirmText'),
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonText: t('employees.btnYesDelete'),
+      cancelButtonText: t('employees.btnCancel')
     });
 
     if (result.isConfirmed) {
       try {
         await hrService.deleteEmployee(id);
-        toast.success('Empleado eliminado');
+        toast.success(t('employees.deleteSuccess'));
         loadAllData();
       } catch (error) {
-        toast.error('Error al eliminar');
+        toast.error(t('employees.deleteError'));
       }
     }
   };
@@ -87,9 +89,9 @@ export default function Employees() {
   return (
     <div className="container-fluid fade-in">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold m-0"><i className="fas fa-users-cog me-2"></i> Plantilla de Empleados</h2>
+        <h2 className="fw-bold m-0"><i className="fas fa-users-cog me-2"></i> {t('employees.pageTitle')}</h2>
         <button className="btn btn-primary shadow-sm" onClick={() => openForm()}>
-          <i className="fas fa-user-plus me-1"></i> Registrar Empleado
+          <i className="fas fa-user-plus me-1"></i> {t('employees.btnNew')}
         </button>
       </div>
 
@@ -99,14 +101,14 @@ export default function Employees() {
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
                 <tr>
-                  <th className="ps-4">Nombre Completo</th>
-                  <th>Email</th>
-                  <th>Teléfono</th>
-                  <th>Departamento</th>
-                  <th>Rol</th>
-                  <th>Turno</th>
-                  <th>Estado</th>
-                  <th className="text-end pe-4">Acciones</th>
+                  <th className="ps-4">{t('employees.colName')}</th>
+                  <th>{t('employees.colEmail')}</th>
+                  <th>{t('employees.colPhone')}</th>
+                  <th>{t('employees.colDept')}</th>
+                  <th>{t('employees.colRole')}</th>
+                  <th>{t('employees.colShift')}</th>
+                  <th>{t('employees.colStatus')}</th>
+                  <th className="text-end pe-4">{t('employees.colActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -115,15 +117,15 @@ export default function Employees() {
                     <td className="ps-4 fw-medium">
                         {item.first_name} {item.last_name}
                     </td>
-                    <td className="small">{item.email || <span className="text-muted">N/A</span>}</td>
-                    <td className="small">{item.phone || <span className="text-muted">N/A</span>}</td>
+                    <td className="small">{item.email || <span className="text-muted">{t('employees.na')}</span>}</td>
+                    <td className="small">{item.phone || <span className="text-muted">{t('employees.na')}</span>}</td>
                     <td>{item.department_name}</td>
                     <td><span className="badge bg-secondary">{item.role_name}</span></td>
                     <td>{item.shift_name} <br/><small className="text-muted">{item.start_time} - {item.end_time}</small></td>
                     <td>
                         {item.is_active ? 
-                           <span className="badge bg-success bg-opacity-10 text-success border border-success">Activo</span> : 
-                           <span className="badge bg-danger bg-opacity-10 text-danger border border-danger">Inactivo</span>}
+                           <span className="badge bg-success bg-opacity-10 text-success border border-success">{t('employees.statusActive')}</span> : 
+                           <span className="badge bg-danger bg-opacity-10 text-danger border border-danger">{t('employees.statusInactive')}</span>}
                     </td>
                     <td className="text-end pe-4">
                       <button className="btn btn-sm btn-outline-secondary me-2" onClick={() => openForm(item)}>
@@ -136,7 +138,7 @@ export default function Employees() {
                   </tr>
                 ))}
                 {employees.length === 0 && (
-                  <tr><td colSpan="6" className="text-center py-4 text-muted">No hay empleados registrados.</td></tr>
+                  <tr><td colSpan="8" className="text-center py-4 text-muted">{t('employees.noRecords')}</td></tr>
                 )}
               </tbody>
             </table>
@@ -149,45 +151,45 @@ export default function Employees() {
           <div className="modal-dialog modal-dialog-centered modal-lg">
             <div className="modal-content rounded-4 border-0 shadow">
               <div className="modal-header border-bottom-0 pb-0">
-                <h5 className="modal-title fw-bold">{formData.id ? 'Editar' : 'Registrar'} Empleado</h5>
+                <h5 className="modal-title fw-bold">{formData.id ? t('employees.modalEditTitle') : t('employees.modalNewTitle')}</h5>
                 <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
               </div>
               <div className="modal-body">
                 <form onSubmit={handleSubmit}>
                   <div className="row mb-3">
                     <div className="col-md-6">
-                        <label className="form-label fw-medium">Nombre(s)</label>
+                        <label className="form-label fw-medium">{t('employees.lblFirstName')}</label>
                         <input type="text" className="form-control" required value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} />
                     </div>
                     <div className="col-md-6">
-                        <label className="form-label fw-medium">Apellidos</label>
+                        <label className="form-label fw-medium">{t('employees.lblLastName')}</label>
                         <input type="text" className="form-control" required value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} />
                     </div>
                   </div>
                   
                   <div className="row mb-3">
                     <div className="col-md-6">
-                        <label className="form-label fw-medium">Email</label>
+                        <label className="form-label fw-medium">{t('employees.lblEmail')}</label>
                         <input type="email" className="form-control" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="ejemplo@correo.com" />
                     </div>
                     <div className="col-md-6">
-                        <label className="form-label fw-medium">Teléfono</label>
+                        <label className="form-label fw-medium">{t('employees.lblPhone')}</label>
                         <input type="text" className="form-control" value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="809-000-0000" />
                     </div>
                   </div>
 
                   <div className="row mb-3">
                     <div className="col-md-6">
-                        <label className="form-label fw-medium">Departamento</label>
+                        <label className="form-label fw-medium">{t('employees.lblDept')}</label>
                         <select className="form-select" required value={formData.department_id} onChange={e => setFormData({...formData, department_id: e.target.value})}>
-                            <option value="">Seleccione...</option>
+                            <option value="">{t('employees.selectPlaceholder')}</option>
                             {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                         </select>
                     </div>
                     <div className="col-md-6">
-                        <label className="form-label fw-medium">Rol Funcional</label>
+                        <label className="form-label fw-medium">{t('employees.lblRole')}</label>
                         <select className="form-select" required value={formData.employee_role_id} onChange={e => setFormData({...formData, employee_role_id: e.target.value})}>
-                            <option value="">Seleccione...</option>
+                            <option value="">{t('employees.selectPlaceholder')}</option>
                             {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                         </select>
                     </div>
@@ -195,23 +197,23 @@ export default function Employees() {
 
                   <div className="row mb-4">
                      <div className="col-md-6">
-                        <label className="form-label fw-medium">Turno (Horario)</label>
+                        <label className="form-label fw-medium">{t('employees.lblShift')}</label>
                         <select className="form-select" required value={formData.shift_id} onChange={e => setFormData({...formData, shift_id: e.target.value})}>
-                            <option value="">Seleccione...</option>
+                            <option value="">{t('employees.selectPlaceholder')}</option>
                             {schedules.map(s => <option key={s.id} value={s.id}>{s.name} ({s.start_time}-{s.end_time})</option>)}
                         </select>
                     </div>
                      <div className="col-md-6 d-flex align-items-end">
                         <div className="form-check form-switch fs-5 pb-1">
                             <input className="form-check-input" type="checkbox" role="switch" id="activeSwitch" checked={formData.is_active} onChange={e => setFormData({...formData, is_active: e.target.checked})} />
-                            <label className="form-check-label fs-6 pt-1 ms-2" htmlFor="activeSwitch">Empleado Activo</label>
+                            <label className="form-check-label fs-6 pt-1 ms-2" htmlFor="activeSwitch">{t('employees.lblActiveEmployee')}</label>
                         </div>
                     </div>
                   </div>
 
                   <div className="d-flex gap-2 justify-content-end mt-4">
-                    <button type="button" className="btn btn-light" onClick={() => setShowModal(false)}>Cancelar</button>
-                    <button type="submit" className="btn btn-primary px-4">Guardar</button>
+                    <button type="button" className="btn btn-light" onClick={() => setShowModal(false)}>{t('employees.btnCancel')}</button>
+                    <button type="submit" className="btn btn-primary px-4">{t('employees.btnSave')}</button>
                   </div>
                 </form>
               </div>

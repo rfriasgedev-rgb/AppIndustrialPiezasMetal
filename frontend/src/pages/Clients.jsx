@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import API from '../api/client';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 export default function Clients() {
+    const { t } = useTranslation();
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -51,26 +53,26 @@ export default function Clients() {
         try {
             if (isEditing) {
                 await API.put(`/clients/${form.id}`, form);
-                toast.success('Cliente actualizado exitosamente.');
+                toast.success(t('clients.updateSuccess'));
             } else {
                 await API.post('/clients', form);
-                toast.success('Cliente creado exitosamente.');
+                toast.success(t('clients.createSuccess'));
             }
             setShowModal(false);
             fetchClients();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Error al guardar el cliente.');
+            toast.error(err.response?.data?.error || t('clients.saveError'));
         }
     };
 
     const handleDelete = async (client) => {
-        if (window.confirm(`¿Estás seguro de eliminar el cliente "${client.company_name}"?\nEsta acción no se puede deshacer.`)) {
+        if (window.confirm(t('clients.deleteConfirm', { name: client.company_name }))) {
             try {
                 await API.delete(`/clients/${client.id}`);
-                toast.success('Cliente eliminado exitosamente.');
+                toast.success(t('clients.deleteSuccess'));
                 fetchClients();
             } catch (err) {
-                toast.error(err.response?.data?.error || 'Error al eliminar el cliente.');
+                toast.error(err.response?.data?.error || t('clients.deleteError'));
             }
         }
     };
@@ -79,18 +81,18 @@ export default function Clients() {
         <>
             <div className="content-header mb-3 d-flex align-items-center justify-content-between">
                 <div>
-                    <h1 style={{ fontWeight: 700 }}><i className="fas fa-users mr-2 text-danger"></i>Clientes</h1>
-                    <small className="text-muted">Gestión de clientes y cuentas</small>
+                    <h1 style={{ fontWeight: 700 }}><i className="fas fa-users mr-2 text-danger"></i>{t('clients.pageTitle')}</h1>
+                    <small className="text-muted">{t('clients.pageSubtitle')}</small>
                 </div>
                 {hasRole('ADMIN', 'VENTAS') && (
-                    <button className="btn btn-danger" onClick={openCreateModal}><i className="fas fa-plus mr-1"></i>Nuevo Cliente</button>
+                    <button className="btn btn-danger" onClick={openCreateModal}><i className="fas fa-plus mr-1"></i>{t('clients.btnNewClient')}</button>
                 )}
             </div>
 
             <div className="card mb-3" style={{ borderRadius: '12px' }}>
                 <div className="card-body py-2">
                     <input
-                        className="form-control" placeholder="Buscar cliente por nombre o contacto..."
+                        className="form-control" placeholder={t('clients.searchPlaceholder')}
                         value={search} onChange={e => setSearch(e.target.value)}
                         style={{ borderRadius: '8px' }}
                     />
@@ -102,14 +104,14 @@ export default function Clients() {
                         <div className="table-responsive">
                             <table className="table table-hover mb-0">
                                 <thead style={{ background: '#1a1a2e', color: '#fff' }}>
-                                    <tr><th>Empresa</th><th>Contacto</th><th>Correo</th><th>Teléfono</th><th>Límite Crédito</th><th>Saldo Pendiente</th><th>Estado</th>{hasRole('ADMIN', 'VENTAS') && <th className="text-center">Acciones</th>}</tr>
+                                    <tr><th>{t('clients.colCompany')}</th><th>{t('clients.colContact')}</th><th>{t('clients.colEmail')}</th><th>{t('clients.colPhone')}</th><th>{t('clients.colCreditLimit')}</th><th>{t('clients.colBalance')}</th><th>{t('clients.colStatus')}</th>{hasRole('ADMIN', 'VENTAS') && <th className="text-center">{t('clients.colActions')}</th>}</tr>
                                 </thead>
                                 <tbody>
                                     {filtered.length === 0 ? (
-                                        <tr><td colSpan="8" className="text-center py-4 text-muted">No se encontraron clientes.</td></tr>
+                                        <tr><td colSpan="8" className="text-center py-4 text-muted">{t('clients.noRecords')}</td></tr>
                                     ) : filtered.map(c => (
                                         <tr key={c.id}>
-                                            <td><strong>{c.company_name}</strong>{c.tax_id && <><br /><small className="text-muted">RUC/NIT: {c.tax_id}</small></>}</td>
+                                            <td><strong>{c.company_name}</strong>{c.tax_id && <><br /><small className="text-muted">{t('clients.taxIdLabel', { tax_id: c.tax_id })}</small></>}</td>
                                             <td>{c.contact_name || '—'}</td>
                                             <td>{c.email || '—'}</td>
                                             <td>{c.phone || '—'}</td>
@@ -121,15 +123,15 @@ export default function Clients() {
                                             </td>
                                             <td>
                                                 <span className={`badge badge-${c.is_active ? 'success' : 'secondary'}`}>
-                                                    {c.is_active ? 'Activo' : 'Inactivo'}
+                                                    {c.is_active ? t('clients.statusActive') : t('clients.statusInactive')}
                                                 </span>
                                             </td>
                                             {hasRole('ADMIN', 'VENTAS') && (
                                                 <td className="text-center">
-                                                    <button className="btn btn-sm btn-outline-primary mr-2" onClick={() => openEditModal(c)} title="Editar Cliente">
+                                                    <button className="btn btn-sm btn-outline-primary mr-2" onClick={() => openEditModal(c)} title={t('clients.btnEdit')}>
                                                         <i className="fas fa-edit"></i>
                                                     </button>
-                                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(c)} title="Eliminar Cliente">
+                                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(c)} title={t('clients.btnDelete')}>
                                                         <i className="fas fa-trash"></i>
                                                     </button>
                                                 </td>
@@ -149,54 +151,54 @@ export default function Clients() {
                     <div className="modal-dialog modal-lg">
                         <div className="modal-content" style={{ borderRadius: '12px' }}>
                             <div className="modal-header" style={{ background: '#1a1a2e', color: '#fff', borderRadius: '12px 12px 0 0' }}>
-                                <h5 className="modal-title">{isEditing ? 'Editar Cliente' : 'Nuevo Cliente'}</h5>
+                                <h5 className="modal-title">{isEditing ? t('clients.modalEditTitle') : t('clients.modalNewTitle')}</h5>
                                 <button type="button" className="close text-white" onClick={() => setShowModal(false)}><span>&times;</span></button>
                             </div>
                             <form onSubmit={handleSave}>
                                 <div className="modal-body">
                                     <div className="row">
                                         <div className="col-md-6 form-group">
-                                            <label>Nombre de la Empresa / Razón Social <span className="text-danger">*</span></label>
+                                            <label>{t('clients.lblCompanyName')} <span className="text-danger">*</span></label>
                                             <input className="form-control" required value={form.company_name} onChange={e => setForm({ ...form, company_name: e.target.value })} />
                                         </div>
                                         <div className="col-md-6 form-group">
-                                            <label>RUC / NIT</label>
+                                            <label>{t('clients.lblTaxId')}</label>
                                             <input className="form-control" value={form.tax_id} onChange={e => setForm({ ...form, tax_id: e.target.value })} />
                                         </div>
                                         <div className="col-md-6 form-group">
-                                            <label>Persona de Contacto</label>
+                                            <label>{t('clients.lblContactName')}</label>
                                             <input className="form-control" value={form.contact_name} onChange={e => setForm({ ...form, contact_name: e.target.value })} />
                                         </div>
                                         <div className="col-md-6 form-group">
-                                            <label>Teléfono</label>
+                                            <label>{t('clients.lblPhone')}</label>
                                             <input className="form-control" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
                                         </div>
                                         <div className="col-md-6 form-group">
-                                            <label>Correo Electrónico</label>
+                                            <label>{t('clients.lblEmail')}</label>
                                             <input type="email" className="form-control" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
                                         </div>
                                         <div className="col-md-6 form-group">
-                                            <label>Límite de Crédito ($)</label>
+                                            <label>{t('clients.lblCreditLimit')}</label>
                                             <input type="number" step="0.01" className="form-control" value={form.credit_limit} onChange={e => setForm({ ...form, credit_limit: e.target.value })} />
                                         </div>
                                         <div className="col-md-12 form-group">
-                                            <label>Dirección</label>
+                                            <label>{t('clients.lblAddress')}</label>
                                             <textarea className="form-control" rows="2" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })}></textarea>
                                         </div>
                                         {isEditing && (
                                             <div className="col-md-6 form-group">
-                                                <label>Estado</label>
+                                                <label>{t('clients.lblStatus')}</label>
                                                 <select className="form-control" value={form.is_active ? '1' : '0'} onChange={e => setForm({ ...form, is_active: e.target.value === '1' })}>
-                                                    <option value="1">Activo</option>
-                                                    <option value="0">Inactivo</option>
+                                                    <option value="1">{t('clients.statusActive')}</option>
+                                                    <option value="0">{t('clients.statusInactive')}</option>
                                                 </select>
                                             </div>
                                         )}
                                     </div>
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-                                    <button type="submit" className="btn btn-danger"><i className="fas fa-save mr-1"></i>{isEditing ? 'Guardar Cambios' : 'Crear Cliente'}</button>
+                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{t('clients.btnCancel')}</button>
+                                    <button type="submit" className="btn btn-danger"><i className="fas fa-save mr-1"></i>{isEditing ? t('clients.btnSaveEdit') : t('clients.btnCreateClient')}</button>
                                 </div>
                             </form>
                         </div>

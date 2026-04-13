@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { hrService } from '../services/hr.service';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
+import { useTranslation } from 'react-i18next';
 
 export default function ProductionLines() {
+  const { t } = useTranslation();
   const [lines, setLines] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -22,7 +24,7 @@ export default function ProductionLines() {
       setLines(linesData);
       setEmployees(empData.filter(e => e.is_active)); // Only active employees can be assigned
     } catch (error) {
-      toast.error('Error cargando datos');
+      toast.error(t('productionLines.loadError'));
     }
   };
 
@@ -31,35 +33,35 @@ export default function ProductionLines() {
     try {
       if (formData.id) {
         await hrService.updateProductionLine(formData.id, formData);
-        toast.success('Línea actualizada');
+        toast.success(t('productionLines.updateSuccess'));
       } else {
         await hrService.createProductionLine(formData);
-        toast.success('Línea creada');
+        toast.success(t('productionLines.createSuccess'));
       }
       setShowModal(false);
       loadAllData();
     } catch (error) {
-       toast.error(error.response?.data?.error || 'Error al guardar');
+       toast.error(error.response?.data?.error || t('productionLines.saveError'));
     }
   };
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-      title: '¿Eliminar línea?',
-      text: "Esta acción no se puede deshacer",
+      title: t('productionLines.deleteConfirmTitle'),
+      text: t('productionLines.deleteConfirmText'),
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonText: t('productionLines.btnYesDelete'),
+      cancelButtonText: t('productionLines.btnCancel')
     });
 
     if (result.isConfirmed) {
       try {
         await hrService.deleteProductionLine(id);
-        toast.success('Línea eliminada');
+        toast.success(t('productionLines.deleteSuccess'));
         loadAllData();
       } catch (error) {
-        toast.error('Error al eliminar');
+        toast.error(t('productionLines.deleteError'));
       }
     }
   };
@@ -89,9 +91,9 @@ export default function ProductionLines() {
   return (
     <div className="container-fluid fade-in">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold m-0"><i className="fas fa-network-wired me-2"></i> Líneas de Producción</h2>
+        <h2 className="fw-bold m-0"><i className="fas fa-network-wired me-2"></i> {t('productionLines.pageTitle')}</h2>
         <button className="btn btn-primary shadow-sm" onClick={() => openForm()}>
-          <i className="fas fa-plus me-1"></i> Nueva Línea
+          <i className="fas fa-plus me-1"></i> {t('productionLines.btnNewLine')}
         </button>
       </div>
 
@@ -114,14 +116,14 @@ export default function ProductionLines() {
                     <p className="text-muted small mb-3">{line.description}</p>
                     
                     <div className="mb-3 px-3 py-2 bg-light rounded-3">
-                        <small className="d-block text-muted fw-bold mb-1">LÍDER DE LÍNEA</small>
+                        <small className="d-block text-muted fw-bold mb-1">{t('productionLines.lblLeader')}</small>
                         {line.leader_first_name ? 
                             <span><i className="fas fa-star text-warning me-1"></i> {line.leader_first_name} {line.leader_last_name}</span> : 
-                            <span className="text-muted fst-italic">Sin asignar</span>
+                            <span className="text-muted fst-italic">{t('productionLines.unassigned')}</span>
                         }
                     </div>
 
-                    <h6 className="fw-bold mb-3"><i className="fas fa-users text-secondary me-2"></i> Personal de apoyo ({line.employees?.length || 0})</h6>
+                    <h6 className="fw-bold mb-3"><i className="fas fa-users text-secondary me-2"></i> {t('productionLines.lblSupportStaff', { count: line.employees?.length || 0 })}</h6>
                     {line.employees && line.employees.length > 0 ? (
                         <ul className="list-group list-group-flush border-top">
                             {line.employees.map(emp => (
@@ -132,14 +134,14 @@ export default function ProductionLines() {
                             ))}
                         </ul>
                     ) : (
-                        <p className="text-muted text-center py-2 bg-light rounded-3">No hay empleados asignados</p>
+                        <p className="text-muted text-center py-2 bg-light rounded-3">{t('productionLines.noEmployees')}</p>
                     )}
                 </div>
             </div>
           </div>
         ))}
         {lines.length === 0 && (
-            <div className="col-12"><p className="text-center text-muted">No hay líneas de producción registradas.</p></div>
+            <div className="col-12"><p className="text-center text-muted">{t('productionLines.noLines')}</p></div>
         )}
       </div>
 
@@ -148,20 +150,20 @@ export default function ProductionLines() {
           <div className="modal-dialog modal-dialog-centered modal-lg">
             <div className="modal-content rounded-4 border-0 shadow">
               <div className="modal-header border-bottom-0 pb-0">
-                <h5 className="modal-title fw-bold">{formData.id ? 'Editar' : 'Nueva'} Línea</h5>
+                <h5 className="modal-title fw-bold">{formData.id ? t('productionLines.modalEditTitle') : t('productionLines.modalNewTitle')} {t('productionLines.lblLineWord')}</h5>
                 <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
               </div>
               <div className="modal-body">
                 <form onSubmit={handleSubmit}>
                   <div className="row mb-3">
                     <div className="col-md-6">
-                        <label className="form-label fw-medium">Nombre de Línea</label>
-                        <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Ej. Línea 1" />
+                        <label className="form-label fw-medium">{t('productionLines.lblName')}</label>
+                        <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder={t('productionLines.namePlaceholder')} />
                     </div>
                     <div className="col-md-6">
-                        <label className="form-label fw-medium">Líder de Línea</label>
+                        <label className="form-label fw-medium">{t('productionLines.lblAssignLeader')}</label>
                         <select className="form-select" value={formData.leader_employee_id} onChange={e => setFormData({...formData, leader_employee_id: e.target.value})}>
-                            <option value="">(Sin asignar)</option>
+                            <option value="">({t('productionLines.unassigned')})</option>
                             {employees.map(emp => (
                                 <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name} - {emp.role_name}</option>
                             ))}
@@ -170,12 +172,12 @@ export default function ProductionLines() {
                   </div>
                   
                   <div className="mb-4">
-                    <label className="form-label fw-medium">Descripción</label>
+                    <label className="form-label fw-medium">{t('productionLines.lblDescription')}</label>
                     <textarea className="form-control" rows="2" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})}></textarea>
                   </div>
 
                   <hr className="my-4"/>
-                  <h6 className="fw-bold mb-3">Establecer Personal de Línea</h6>
+                  <h6 className="fw-bold mb-3">{t('productionLines.lblSetStaff')}</h6>
                   
                   <div className="bg-light p-3 rounded-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                       <div className="row">
@@ -191,7 +193,7 @@ export default function ProductionLines() {
                                     />
                                     <label className="form-check-label w-100 ms-2" htmlFor={`emp_${emp.id}`}>
                                         {emp.first_name} {emp.last_name} <br/>
-                                        <small className="text-secondary">{emp.role_name} | Dept: {emp.department_name}</small>
+                                        <small className="text-secondary">{emp.role_name} | {t('productionLines.lblDept')} {emp.department_name}</small>
                                     </label>
                                   </div>
                               </div>
@@ -200,8 +202,8 @@ export default function ProductionLines() {
                   </div>
 
                   <div className="d-flex gap-2 justify-content-end mt-4">
-                    <button type="button" className="btn btn-light" onClick={() => setShowModal(false)}>Cancelar</button>
-                    <button type="submit" className="btn btn-primary px-4">Guardar</button>
+                    <button type="button" className="btn btn-light" onClick={() => setShowModal(false)}>{t('productionLines.btnCancel')}</button>
+                    <button type="submit" className="btn btn-primary px-4">{t('productionLines.btnSave')}</button>
                   </div>
                 </form>
               </div>

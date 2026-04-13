@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -11,6 +12,7 @@ export default function Login() {
     const [errorMsg, setErrorMsg] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
@@ -28,7 +30,7 @@ export default function Login() {
         const slowResponseTimeout = setTimeout(() => {
             if (!attemptSucceeded) {
                 setIsWakingUp(true);
-                toast.info('El servidor está en hibernación. Despertando la base de datos y máquina... (puede tomar más de un minuto)', { autoClose: 20000 });
+                toast.info(t('login.translating_server_toast'), { autoClose: 20000 });
             }
         }, 5000);
 
@@ -40,7 +42,7 @@ export default function Login() {
 
                 const showingWakeUpUI = attempts > 0 || document.querySelector('.fa-satellite-dish');
                 if (showingWakeUpUI) {
-                    toast.success('¡Servidor conectado exitosamente!');
+                    toast.success(t('login.server_connected'));
                 }
                 navigate('/');
                 return; // Exit on success
@@ -55,7 +57,7 @@ export default function Login() {
                         // Make sure we show the toast if not already shown by the setTimeout
                         if (!document.querySelector('.fa-satellite-dish')) {
                             setIsWakingUp(true);
-                            toast.info('Servidor en hibernación, activando sistema...', { autoClose: 20000 });
+                            toast.info(t('login.server_waking'), { autoClose: 20000 });
                         }
                     }
                     // Progressive delay to allow the server enough time to boot
@@ -67,7 +69,7 @@ export default function Login() {
                     
                     let errorData = err.response?.data?.error;
                     let msg = typeof errorData === 'object' && errorData !== null ? errorData.message : errorData;
-                    msg = msg || (isSleepError ? 'El servidor tardó demasiado en iniciar.' : 'Credenciales inválidas o error de conexión.');
+                    msg = msg || (isSleepError ? t('login.server_timeout') : t('login.default_error'));
                     
                     toast.error(msg);
                     setErrorMsg(msg);
@@ -91,7 +93,7 @@ export default function Login() {
                 <div className="card border-0" style={{ borderRadius: '16px', boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
                     <div className="card-body p-5">
                         <h5 className="text-center mb-4 font-weight-bold" style={{ color: '#0f172a' }}>
-                            Sistema de Producción
+                            {t('login.title')}
                         </h5>
                         
                         {errorMsg && (
@@ -102,10 +104,10 @@ export default function Login() {
 
                         <form onSubmit={handleSubmit}>
                             <div className="form-group mb-3">
-                                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b' }}>CORREO ELECTRÓNICO</label>
+                                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b' }}>{t('login.email')}</label>
                                 <div className="input-group">
                                     <input
-                                        type="email" className="form-control bg-light" placeholder="tu@correo.com"
+                                        type="email" className="form-control bg-light" placeholder={t('login.email_placeholder')}
                                         value={email} onChange={e => setEmail(e.target.value)} required
                                         style={{ border: 'none', borderRadius: '8px 0 0 8px', padding: '12px' }}
                                     />
@@ -117,10 +119,10 @@ export default function Login() {
                                 </div>
                             </div>
                             <div className="form-group mb-4">
-                                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b' }}>CONTRASEÑA</label>
+                                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b' }}>{t('login.password')}</label>
                                 <div className="input-group">
                                     <input
-                                        type="password" className="form-control bg-light" placeholder="••••••••"
+                                        type="password" className="form-control bg-light" placeholder={t('login.password_placeholder')}
                                         value={password} onChange={e => setPassword(e.target.value)} required
                                         style={{ border: 'none', borderRadius: '8px 0 0 8px', padding: '12px' }}
                                     />
@@ -137,17 +139,17 @@ export default function Login() {
                                 style={{ background: '#4f46e5', color: '#fff', borderRadius: '8px', fontWeight: 600, padding: '12px', transition: 'all 0.2s' }}
                             >
                                 {loading ? (
-                                    isWakingUp ? <><i className="fas fa-satellite-dish fa-spin mr-2"></i>Conectando Servidor...</>
-                                        : <><i className="fas fa-spinner fa-spin mr-2"></i>Verificando...</>
+                                    isWakingUp ? <><i className="fas fa-satellite-dish fa-spin mr-2"></i>{t('login.connecting')}</>
+                                        : <><i className="fas fa-spinner fa-spin mr-2"></i>{t('login.verifying')}</>
                                 ) : (
-                                    <><i className="fas fa-sign-in-alt mr-2"></i>Ingresar a MetalERP</>
+                                    <><i className="fas fa-sign-in-alt mr-2"></i>{t('login.login_btn')}</>
                                 )}
                             </button>
                         </form>
                     </div>
                 </div>
                 <p className="text-center text-muted mt-4" style={{ fontSize: '0.8rem', fontWeight: '500' }}>
-                    MetalERP v1.0 · Diseño Minimalista
+                    {t('login.footer')}
                 </p>
             </div>
         </div>

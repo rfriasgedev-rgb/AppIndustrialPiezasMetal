@@ -2,14 +2,24 @@ import { useEffect, useState } from 'react';
 import API from '../api/client';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import ModalClientSearch from '../components/ModalClientSearch';
 import ModalProductSearch from '../components/ModalProductSearch';
 
-const STATUS_LABELS = {
-    DRAFT: 'Borrador', PENDING_MATERIAL: 'Esperando Material', CUTTING: 'Corte',
-    BENDING: 'Doblado', ASSEMBLY: 'Ensamblaje', CLEANING: 'Línea de Producción',
-    READY_FOR_DELIVERY: 'Listo p/Entrega', DELIVERED: 'Entregado', CANCELLED: 'Cancelado',
-};
+export default function Production() {
+    const { t } = useTranslation();
+
+    const STATUS_LABELS = {
+        DRAFT: t('production.statusDraft', 'Borrador'),
+        PENDING_MATERIAL: t('production.statusPendingMaterial', 'Esperando Material'),
+        CUTTING: t('production.statusCutting', 'Corte'),
+        BENDING: t('production.statusBending', 'Doblado'),
+        ASSEMBLY: t('production.statusAssembly', 'Ensamblaje'),
+        CLEANING: t('production.statusCleaning', 'Línea de Producción'),
+        READY_FOR_DELIVERY: t('production.statusReadyForDelivery', 'Listo p/Entrega'),
+        DELIVERED: t('production.statusDelivered', 'Entregado'),
+        CANCELLED: t('production.statusCancelled', 'Cancelado')
+    };
 const STATUS_COLORS = {
     DRAFT: 'secondary', PENDING_MATERIAL: 'warning', CUTTING: 'primary',
     BENDING: 'info', ASSEMBLY: 'purple', CLEANING: 'success', 
@@ -22,7 +32,6 @@ const NEXT_STATUS = {
     READY_FOR_DELIVERY: 'DELIVERED',
 };
 
-export default function Production() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('');
@@ -53,7 +62,7 @@ export default function Production() {
             setOrders(oRes.data);
             setLoading(false);
         } catch (error) {
-            toast.error('Error al cargar datos. Verifica la conexión.');
+            toast.error(t('production.fetchError'));
             setLoading(false);
         }
     };
@@ -97,7 +106,7 @@ export default function Production() {
             });
             setShowModal(true);
         }).catch(err => {
-            toast.error('No se pudo cargar el detalle de la orden');
+            toast.error(t('production.loadDetailError'));
         });
     };
 
@@ -110,7 +119,7 @@ export default function Production() {
     const handleProductSelect = (product) => {
         // Evitar duplicados
         if (form.items.find(i => i.product_id === product.id)) {
-            toast.warning('Esta pieza ya está en la orden. Puedes modificar su cantidad en la tabla.');
+            toast.warning(t('production.productDuplicate'));
             setShowProductModal(false);
             return;
         }
@@ -153,11 +162,11 @@ export default function Production() {
         e.preventDefault();
 
         if (!form.client_id) {
-            return toast.warning('Debe seleccionar un Cliente conectando con la Lupa.');
+            return toast.warning(t('production.clientWarning'));
         }
 
         if (form.items.length === 0) {
-            return toast.warning('Debe agregar al menos una pieza a fabricar a la orden.');
+            return toast.warning(t('production.itemsWarning'));
         }
 
         // Prevenir errores de MySQL con fechas vacías (Strict Mode)
@@ -169,15 +178,17 @@ export default function Production() {
         try {
             if (isEditing) {
                 await API.put(`/production/${form.id}`, payload);
-                toast.success('Orden de producción actualizada.');
+                toast.success(t('production.updateSuccess'));
             } else {
                 await API.post('/production', payload);
-                toast.success('Nueva orden de producción creada.');
+                toast.success(t('production.createSuccess'));
             }
             setShowModal(false);
             loadData();
+            fetchProducts(); // or loadData
+            loadData();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Error al guardar la orden.');
+            toast.error(err.response?.data?.error || t('production.saveError'));
         }
     };
 
@@ -186,22 +197,22 @@ export default function Production() {
         if (currentStatus === 'BENDING' && requiresAssembly) nextStatus = 'ASSEMBLY';
         if (!nextStatus) return;
         try {
-            await API.put(`/production/${id}/advance`, { to_status: nextStatus, notes: `Avance automático desde UI` });
-            toast.success(`Orden avanzada a: ${STATUS_LABELS[nextStatus]}`);
+            await API.put(`/production/${id}/advance`, { to_status: nextStatus, notes: t('production.advanceAutoNotes') });
+            toast.success(t('production.advanceSuccess', { status: STATUS_LABELS[nextStatus] }));
             loadData();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Error al avanzar la orden.');
+            toast.error(err.response?.data?.error || t('production.advanceError'));
         }
     };
 
     const handleDelete = async (order) => {
-        if (window.confirm(`¿Estás seguro de eliminar la orden ${order.order_number} de ${order.client_name}?\nEsta acción no se puede deshacer.`)) {
+        if (window.confirm(t('production.deleteConfirm', { order: order.order_number, client: order.client_name }))) {
             try {
                 await API.delete(`/production/${order.id}`);
-                toast.success('Orden eliminada exitosamente.');
+                toast.success(t('production.deleteSuccess'));
                 loadData();
             } catch (err) {
-                toast.error(err.response?.data?.error || 'Error al eliminar la orden.');
+                toast.error(err.response?.data?.error || t('production.deleteError'));
             }
         }
     };
@@ -210,7 +221,7 @@ export default function Production() {
         try {
             const res = await API.post(`/requisitions/generate/${orderId}`);
             if (res.status === 201 || res.status === 200) {
-                toast.success(res.data.message || 'Requisición lista.');
+                toast.success(res.data.message || t('production.requisitionReady'));
 
                 // Obtener el PDF protegido retornando un Blob
                 const pdfRes = await API.get(`/requisitions/${res.data.requisitionId}/pdf`, { responseType: 'blob' });
@@ -220,7 +231,7 @@ export default function Production() {
                 loadData();
             }
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Error al generar la requisición de materiales.');
+            toast.error(err.response?.data?.error || t('production.requisitionError'));
         }
     };
 
@@ -228,12 +239,12 @@ export default function Production() {
         <>
             <div className="content-header mb-3 d-flex align-items-center justify-content-between">
                 <div>
-                    <h1 style={{ fontWeight: 700 }}><i className="fas fa-industry mr-2 text-danger"></i>Órdenes de Producción</h1>
-                    <small className="text-muted">Gestión y seguimiento del flujo de producción</small>
+                    <h1 style={{ fontWeight: 700 }}><i className="fas fa-industry mr-2 text-danger"></i>{t('production.pageTitle')}</h1>
+                    <small className="text-muted">{t('production.pageSubtitle')}</small>
                 </div>
                 {hasRole('ADMIN', 'SUPERVISOR', 'VENTAS') && (
                     <button className="btn btn-danger" onClick={openCreateModal}>
-                        <i className="fas fa-plus mr-1"></i>Nueva Orden
+                        <i className="fas fa-plus mr-1"></i>{t('production.btnNewOrder')}
                     </button>
                 )}
             </div>
@@ -241,7 +252,7 @@ export default function Production() {
             {/* Filtros por estado */}
             <div className="card mb-3">
                 <div className="card-body py-2 d-flex gap-2 flex-wrap">
-                    <button className={`btn btn-sm ${filterStatus === '' ? 'btn-dark' : 'btn-outline-dark'} mr-1`} onClick={() => setFilterStatus('')}>Todas</button>
+                    <button className={`btn btn-sm ${filterStatus === '' ? 'btn-dark' : 'btn-outline-dark'} mr-1`} onClick={() => setFilterStatus('')}>{t('production.filterAll')}</button>
                     {Object.entries(STATUS_LABELS).map(([k, v]) => (
                         <button key={k} className={`btn btn-sm mr-1 ${filterStatus === k ? 'btn-danger' : 'btn-outline-secondary'}`} onClick={() => setFilterStatus(k)}>{v}</button>
                     ))}
@@ -255,13 +266,13 @@ export default function Production() {
                             <table className="table table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th>N° Orden</th><th>Cliente</th><th>Pieza/Producto</th><th>Cant.</th>
-                                        <th>Estado</th><th>Prioridad</th><th>Entrega Est.</th><th>Acciones</th>
+                                        <th>{t('production.colOrderNo')}</th><th>{t('production.colClient')}</th><th>{t('production.colProduct')}</th><th>{t('production.colQty')}</th>
+                                        <th>{t('production.colStatus')}</th><th>{t('production.colPriority')}</th><th>{t('production.colEstDelivery')}</th><th>{t('production.colActions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {orders.length === 0 ? (
-                                        <tr><td colSpan="7" className="text-center py-4 text-muted">No hay órdenes registradas.</td></tr>
+                                        <tr><td colSpan="7" className="text-center py-4 text-muted">{t('production.noRecords')}</td></tr>
                                     ) : orders.map(o => (
                                         <tr key={o.id}>
                                             <td><strong style={{ color: '#e94560' }}>{o.order_number}</strong></td>
@@ -269,12 +280,12 @@ export default function Production() {
                                             <td>
                                                 <div className="d-flex align-items-center">
                                                     <i className="fas fa-layer-group text-secondary mr-2"></i>
-                                                    <strong>{o.total_items}</strong> <span className="text-muted ml-1" style={{ fontSize: '0.9rem' }}>Piezas</span>
+                                                    <strong>{o.total_items}</strong> <span className="text-muted ml-1" style={{ fontSize: '0.9rem' }}>{t('production.lblPieces')}</span>
                                                 </div>
                                             </td>
                                             <td>
                                                 <span className={`badge badge-${STATUS_COLORS[o.status] || 'secondary'}`} style={{ padding: '5px 10px', borderRadius: '6px' }}>
-                                                    {o.status === 'READY_FOR_DELIVERY' ? 'Listo p/Entrega' : (o.status === 'IN_PROGRESS' ? 'En Producción' : STATUS_LABELS[o.status] || o.status)}
+                                                    {o.status === 'READY_FOR_DELIVERY' ? t('production.statusReady') : (o.status === 'IN_PROGRESS' ? t('production.statusInProgress') : STATUS_LABELS[o.status] || o.status)}
                                                 </span>
                                                 {o.total_items > 0 && o.status !== 'DRAFT' && o.status !== 'CANCELLED' && (
                                                     <div className="progress mt-1" style={{ height: '5px', borderRadius: '5px' }}>
@@ -290,23 +301,23 @@ export default function Production() {
                                             <td>{o.estimated_delivery ? new Date(o.estimated_delivery).toLocaleDateString() : '—'}</td>
                                             <td>
                                                 {/* Botón de Avanzar quitado en lista general porque ahora el avance es por Ítem en el Detalle */}
-                                                <a href={`/production/${o.id}`} className="btn btn-sm btn-outline-info mr-1" title="Ver Detalle y Flujo">
+                                                <a href={`/production/${o.id}`} className="btn btn-sm btn-outline-info mr-1" title={t('production.btnViewDetail')}>
                                                     <i className="fas fa-project-diagram"></i>
                                                 </a>
 
                                                 {/* Botón de Requisición */}
                                                 {(o.status === 'PENDING_MATERIAL' || o.status === 'IN_PROGRESS' || o.status === 'DRAFT') && hasRole('ADMIN', 'SUPERVISOR') && (
-                                                    <button className="btn btn-sm btn-outline-warning mr-1" onClick={() => handleRequisitionRequest(o.id)} title="Solicitar Materiales (Generar Requisición)">
+                                                    <button className="btn btn-sm btn-outline-warning mr-1" onClick={() => handleRequisitionRequest(o.id)} title={t('production.btnReqMaterial')}>
                                                         <i className="fas fa-clipboard-list"></i>
                                                     </button>
                                                 )}
 
                                                 {hasRole('ADMIN', 'SUPERVISOR', 'VENTAS') && (
                                                     <>
-                                                        <button className="btn btn-sm btn-outline-primary mr-1" onClick={() => openEditModal(o)} title="Editar Orden">
+                                                        <button className="btn btn-sm btn-outline-primary mr-1" onClick={() => openEditModal(o)} title={t('production.btnEditOrder')}>
                                                             <i className="fas fa-edit"></i>
                                                         </button>
-                                                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(o)} title="Eliminar Orden">
+                                                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(o)} title={t('production.btnDeleteOrder')}>
                                                             <i className="fas fa-trash"></i>
                                                         </button>
                                                     </>
@@ -327,7 +338,7 @@ export default function Production() {
                     <div className="modal-dialog modal-lg">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title font-weight-bold">{isEditing ? 'Editar Orden de Producción' : 'Nueva Orden de Producción'}</h5>
+                                <h5 className="modal-title font-weight-bold">{isEditing ? t('production.modalEditTitle') : t('production.modalNewTitle')}</h5>
                                 <button type="button" className="close" onClick={() => setShowModal(false)}><span>&times;</span></button>
                             </div>
                             <form onSubmit={handleSave}>
@@ -336,14 +347,14 @@ export default function Production() {
                                         <div className="col-12">
                                             <div className="row">
                                                 <div className="col-md-6 form-group">
-                                                    <label>Cliente Asignado <span className="text-danger">*</span></label>
+                                                    <label>{t('production.lblClient')} <span className="text-danger">*</span></label>
                                                     <div className="input-group">
                                                         <input
                                                             type="text"
                                                             className="form-control"
                                                             readOnly
                                                             value={selectedClient ? selectedClient.company_name : ''}
-                                                            placeholder="Click en la lupa para buscar..."
+                                                            placeholder={t('production.searchClientPlaceholder')}
                                                         />
                                                         <div className="input-group-append">
                                                             <button
@@ -358,16 +369,16 @@ export default function Production() {
                                                 </div>
 
                                                 <div className="col-md-3 form-group">
-                                                    <label>Fecha Est. Entrega</label>
+                                                    <label>{t('production.lblEstDelivery')}</label>
                                                     <input type="date" className="form-control" value={form.estimated_delivery} onChange={e => setForm({ ...form, estimated_delivery: e.target.value })} />
                                                 </div>
                                                 <div className="col-md-3 form-group">
-                                                    <label>Prioridad Global</label>
+                                                    <label>{t('production.lblPriority')}</label>
                                                     <select className="form-control" value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })}>
-                                                        <option value="LOW">Baja</option>
-                                                        <option value="NORMAL">Normal</option>
-                                                        <option value="HIGH">Alta</option>
-                                                        <option value="URGENT">Urgente</option>
+                                                        <option value="LOW">{t('production.priorityLow')}</option>
+                                                        <option value="NORMAL">{t('production.priorityNormal')}</option>
+                                                        <option value="HIGH">{t('production.priorityHigh')}</option>
+                                                        <option value="URGENT">{t('production.priorityUrgent')}</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -377,10 +388,10 @@ export default function Production() {
                                     {/* GRID DETALLE DE PIEZAS */}
                                     <div className="card mt-3" style={{ border: '1px solid #e9ecef', boxShadow: 'none' }}>
                                         <div className="card-header bg-light d-flex justify-content-between align-items-center">
-                                            <h6 className="m-0 font-weight-bold text-dark"><i className="fas fa-cubes mr-2"></i>Piezas a Fabricar</h6>
+                                            <h6 className="m-0 font-weight-bold text-dark"><i className="fas fa-cubes mr-2"></i>{t('production.lblItemsToMfg')}</h6>
                                             {!isEditing && (
                                                 <button type="button" className="btn btn-sm btn-dark" onClick={() => setShowProductModal(true)}>
-                                                    <i className="fas fa-plus mr-1"></i> Añadir Pieza del Catálogo
+                                                    <i className="fas fa-plus mr-1"></i> {t('production.btnAddPiece')}
                                                 </button>
                                             )}
                                         </div>
@@ -389,17 +400,17 @@ export default function Production() {
                                                 <table className="table table-sm table-striped mb-0">
                                                     <thead>
                                                         <tr>
-                                                            <th style={{ width: '40%' }}>Producto / Referencia</th>
-                                                            <th style={{ width: '15%' }} className="text-center">Cant.</th>
-                                                            <th style={{ width: '35%' }}>Notas Específicas</th>
-                                                            <th style={{ width: '10%' }} className="text-center">Quitar</th>
+                                                            <th style={{ width: '40%' }}>{t('production.colItemRef')}</th>
+                                                            <th style={{ width: '15%' }} className="text-center">{t('production.colItemQty')}</th>
+                                                            <th style={{ width: '35%' }}>{t('production.colItemNotes')}</th>
+                                                            <th style={{ width: '10%' }} className="text-center">{t('production.colItemRemove')}</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         {form.items.length === 0 ? (
                                                             <tr>
                                                                 <td colSpan="4" className="text-center text-muted p-4">
-                                                                    Usa el botón "Añadir Pieza" para componer la orden.
+                                                                    {t('production.itemsEmpty')}
                                                                 </td>
                                                             </tr>
                                                         ) : form.items.map((it, idx) => (
@@ -407,7 +418,7 @@ export default function Production() {
                                                                 <td className="align-middle">
                                                                     <strong>{it.name}</strong><br />
                                                                     <small className="text-muted">{it.part_number}</small>
-                                                                    {it.requires_assembly && <span className="badge badge-warning ml-2">Ensamblaje</span>}
+                                                                    {it.requires_assembly && <span className="badge badge-warning ml-2">{t('production.badgeAssembly')}</span>}
                                                                 </td>
                                                                 <td className="align-middle px-3">
                                                                     <input
@@ -423,7 +434,7 @@ export default function Production() {
                                                                     <input
                                                                         type="text"
                                                                         className="form-control form-control-sm"
-                                                                        placeholder="Notas de corte, color..."
+                                                                        placeholder={t('production.notesPlaceholder')}
                                                                         value={it.notes}
                                                                         onChange={(e) => updateItemNotes(it.product_id, e.target.value)}
                                                                         disabled={isEditing}
@@ -449,14 +460,14 @@ export default function Production() {
 
                                     <div className="row mt-3">
                                         <div className="col-md-12 form-group">
-                                            <label>Notas Globales de la Orden (Despacho, Facturación, etc.)</label>
-                                            <textarea className="form-control" rows="2" placeholder="Ej: Entregar primero las piezas urgentes." value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })}></textarea>
+                                            <label>{t('production.lblGlobalNotes')}</label>
+                                            <textarea className="form-control" rows="2" placeholder={t('production.globalNotesPlaceholder')} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })}></textarea>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-                                    <button type="submit" className="btn btn-danger"><i className="fas fa-save mr-1"></i>{isEditing ? 'Guardar Cambios de Cabecera' : 'Emitir Orden'}</button>
+                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{t('production.btnCancel')}</button>
+                                    <button type="submit" className="btn btn-danger"><i className="fas fa-save mr-1"></i>{isEditing ? t('production.btnSaveEdit') : t('production.btnEmitOrder')}</button>
                                 </div>
                             </form>
                         </div>

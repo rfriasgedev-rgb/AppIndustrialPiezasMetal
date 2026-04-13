@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { hrService } from '../services/hr.service';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
+import { useTranslation } from 'react-i18next';
 
 export default function Schedules() {
+  const { t } = useTranslation();
   const [schedules, setSchedules] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ id: null, name: '', start_time: '', end_time: '' });
@@ -17,7 +19,7 @@ export default function Schedules() {
       const data = await hrService.getSchedules();
       setSchedules(data);
     } catch (error) {
-      toast.error('Error cargando horarios');
+      toast.error(t('schedules.loadError'));
     }
   };
 
@@ -26,35 +28,35 @@ export default function Schedules() {
     try {
       if (formData.id) {
         await hrService.updateSchedule(formData.id, formData);
-        toast.success('Horario actualizado');
+        toast.success(t('schedules.updateSuccess'));
       } else {
         await hrService.createSchedule(formData);
-        toast.success('Horario creado');
+        toast.success(t('schedules.createSuccess'));
       }
       setShowModal(false);
       loadSchedules();
     } catch (error) {
-       toast.error(error.response?.data?.error || 'Error al guardar');
+       toast.error(error.response?.data?.error || t('schedules.saveError'));
     }
   };
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-      title: '¿Eliminar horario?',
-      text: "Esta acción no se puede deshacer",
+      title: t('schedules.deleteConfirmTitle'),
+      text: t('schedules.deleteConfirmText'),
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonText: t('schedules.btnYesDelete'),
+      cancelButtonText: t('schedules.btnCancel')
     });
 
     if (result.isConfirmed) {
       try {
         await hrService.deleteSchedule(id);
-        toast.success('Horario eliminado');
+        toast.success(t('schedules.deleteSuccess'));
         loadSchedules();
       } catch (error) {
-        toast.error('Error al eliminar');
+        toast.error(t('schedules.deleteError'));
       }
     }
   };
@@ -71,9 +73,9 @@ export default function Schedules() {
   return (
     <div className="container-fluid fade-in">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold m-0"><i className="fas fa-clock me-2"></i> Horarios</h2>
+        <h2 className="fw-bold m-0"><i className="fas fa-clock me-2"></i> {t('schedules.pageTitle')}</h2>
         <button className="btn btn-primary shadow-sm" onClick={() => openForm()}>
-          <i className="fas fa-plus me-1"></i> Nuevo Horario
+          <i className="fas fa-plus me-1"></i> {t('schedules.btnNew')}
         </button>
       </div>
 
@@ -83,10 +85,10 @@ export default function Schedules() {
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
                 <tr>
-                  <th className="ps-4">Turno</th>
-                  <th>Hora Entrada</th>
-                  <th>Hora Salida</th>
-                  <th className="text-end pe-4">Acciones</th>
+                  <th className="ps-4">{t('schedules.colShift')}</th>
+                  <th>{t('schedules.colStartTime')}</th>
+                  <th>{t('schedules.colEndTime')}</th>
+                  <th className="text-end pe-4">{t('schedules.colActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -106,7 +108,7 @@ export default function Schedules() {
                   </tr>
                 ))}
                 {schedules.length === 0 && (
-                  <tr><td colSpan="4" className="text-center py-4 text-muted">No hay horarios registrados.</td></tr>
+                  <tr><td colSpan="4" className="text-center py-4 text-muted">{t('schedules.noRecords')}</td></tr>
                 )}
               </tbody>
             </table>
@@ -119,28 +121,28 @@ export default function Schedules() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content rounded-4 border-0 shadow">
               <div className="modal-header border-bottom-0 pb-0">
-                <h5 className="modal-title fw-bold">{formData.id ? 'Editar' : 'Nuevo'} Horario</h5>
+                <h5 className="modal-title fw-bold">{formData.id ? t('schedules.modalEditTitle') : t('schedules.modalNewTitle')}</h5>
                 <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
               </div>
               <div className="modal-body">
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
-                    <label className="form-label fw-medium">Nombre (Ej. Mañana)</label>
+                    <label className="form-label fw-medium">{t('schedules.lblName')}</label>
                     <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
                   <div className="row mb-4">
                     <div className="col">
-                       <label className="form-label fw-medium">Hora de Entrada</label>
+                       <label className="form-label fw-medium">{t('schedules.lblStartTime')}</label>
                        <input type="time" className="form-control" required value={formData.start_time} onChange={e => setFormData({...formData, start_time: e.target.value})} />
                     </div>
                     <div className="col">
-                       <label className="form-label fw-medium">Hora de Salida</label>
+                       <label className="form-label fw-medium">{t('schedules.lblEndTime')}</label>
                        <input type="time" className="form-control" required value={formData.end_time} onChange={e => setFormData({...formData, end_time: e.target.value})} />
                     </div>
                   </div>
                   <div className="d-flex gap-2 justify-content-end">
-                    <button type="button" className="btn btn-light" onClick={() => setShowModal(false)}>Cancelar</button>
-                    <button type="submit" className="btn btn-primary px-4">Guardar</button>
+                    <button type="button" className="btn btn-light" onClick={() => setShowModal(false)}>{t('schedules.btnCancel')}</button>
+                    <button type="submit" className="btn btn-primary px-4">{t('schedules.btnSave')}</button>
                   </div>
                 </form>
               </div>

@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { hrService } from '../services/hr.service';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
+import { useTranslation } from 'react-i18next';
 
 export default function Departments() {
+  const { t } = useTranslation();
   const [departments, setDepartments] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ id: null, name: '', description: '' });
@@ -17,7 +19,7 @@ export default function Departments() {
       const data = await hrService.getDepartments();
       setDepartments(data);
     } catch (error) {
-      toast.error('Error cargando departamentos');
+      toast.error(t('departments.loadError'));
     }
   };
 
@@ -26,35 +28,35 @@ export default function Departments() {
     try {
       if (formData.id) {
         await hrService.updateDepartment(formData.id, formData);
-        toast.success('Departamento actualizado');
+        toast.success(t('departments.updateSuccess'));
       } else {
         await hrService.createDepartment(formData);
-        toast.success('Departamento creado');
+        toast.success(t('departments.createSuccess'));
       }
       setShowModal(false);
       loadDepartments();
     } catch (error) {
-       toast.error(error.response?.data?.error || 'Error al guardar');
+       toast.error(error.response?.data?.error || t('departments.saveError'));
     }
   };
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-      title: '¿Eliminar departamento?',
-      text: "Esta acción no se puede deshacer",
+      title: t('departments.deleteConfirmTitle'),
+      text: t('departments.deleteConfirmText'),
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonText: t('departments.btnYesDelete'),
+      cancelButtonText: t('departments.btnCancel')
     });
 
     if (result.isConfirmed) {
       try {
         await hrService.deleteDepartment(id);
-        toast.success('Departamento eliminado');
+        toast.success(t('departments.deleteSuccess'));
         loadDepartments();
       } catch (error) {
-        toast.error('Error al eliminar');
+        toast.error(t('departments.deleteError'));
       }
     }
   };
@@ -71,9 +73,9 @@ export default function Departments() {
   return (
     <div className="container-fluid fade-in">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold m-0"><i className="fas fa-building me-2"></i> Departamentos</h2>
+        <h2 className="fw-bold m-0"><i className="fas fa-building me-2"></i> {t('departments.pageTitle')}</h2>
         <button className="btn btn-primary shadow-sm" onClick={() => openForm()}>
-          <i className="fas fa-plus me-1"></i> Nuevo Departamento
+          <i className="fas fa-plus me-1"></i> {t('departments.btnNew')}
         </button>
       </div>
 
@@ -83,9 +85,9 @@ export default function Departments() {
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
                 <tr>
-                  <th className="ps-4">Nombre</th>
-                  <th>Descripción</th>
-                  <th className="text-end pe-4">Acciones</th>
+                  <th className="ps-4">{t('departments.colName')}</th>
+                  <th>{t('departments.colDesc')}</th>
+                  <th className="text-end pe-4">{t('departments.colActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -104,7 +106,7 @@ export default function Departments() {
                   </tr>
                 ))}
                 {departments.length === 0 && (
-                  <tr><td colSpan="3" className="text-center py-4 text-muted">No hay departamentos registrados.</td></tr>
+                  <tr><td colSpan="3" className="text-center py-4 text-muted">{t('departments.noRecords')}</td></tr>
                 )}
               </tbody>
             </table>
@@ -117,22 +119,22 @@ export default function Departments() {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content rounded-4 border-0 shadow">
               <div className="modal-header border-bottom-0 pb-0">
-                <h5 className="modal-title fw-bold">{formData.id ? 'Editar' : 'Nuevo'} Departamento</h5>
+                <h5 className="modal-title fw-bold">{formData.id ? t('departments.modalEditTitle') : t('departments.modalNewTitle')}</h5>
                 <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
               </div>
               <div className="modal-body">
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
-                    <label className="form-label fw-medium">Nombre del Departamento</label>
-                    <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Ej. Diseño" />
+                    <label className="form-label fw-medium">{t('departments.lblDeptName')}</label>
+                    <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder={t('departments.lblNamePlaceholder')} />
                   </div>
                   <div className="mb-4">
-                    <label className="form-label fw-medium">Descripción</label>
-                    <textarea className="form-control" rows="3" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Detalles del área..."></textarea>
+                    <label className="form-label fw-medium">{t('departments.lblDescription')}</label>
+                    <textarea className="form-control" rows="3" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} placeholder={t('departments.descPlaceholder')}></textarea>
                   </div>
                   <div className="d-flex gap-2 justify-content-end">
-                    <button type="button" className="btn btn-light" onClick={() => setShowModal(false)}>Cancelar</button>
-                    <button type="submit" className="btn btn-primary px-4">Guardar</button>
+                    <button type="button" className="btn btn-light" onClick={() => setShowModal(false)}>{t('departments.btnCancel')}</button>
+                    <button type="submit" className="btn btn-primary px-4">{t('departments.btnSave')}</button>
                   </div>
                 </form>
               </div>

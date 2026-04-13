@@ -3,8 +3,10 @@ import API from '../api/client';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 export default function Inventory() {
+    const { t } = useTranslation();
     const [items, setItems] = useState([]);
     const [categories, setCategories] = useState([]);
     const [units, setUnits] = useState([]);
@@ -24,7 +26,7 @@ export default function Inventory() {
     const fetchData = () => {
         Promise.all([API.get('/inventory'), API.get('/inventory/categories'), API.get('/units')]).then(([r1, r2, r3]) => {
             setItems(r1.data); setCategories(r2.data); setUnits(r3.data); setLoading(false);
-        }).catch(err => toast.error('Error cargando inventario'));
+        }).catch(err => toast.error(t('inventory.fetchError')));
     };
     useEffect(() => { fetchData(); }, []);
 
@@ -67,37 +69,37 @@ export default function Inventory() {
         try {
             if (isEditing) {
                 await API.put(`/inventory/${form.id}`, form);
-                toast.success('Item actualizado correctamente.');
+                toast.success(t('inventory.updateSuccess'));
             } else {
                 await API.post('/inventory', form);
-                toast.success('Item creado correctamente.');
+                toast.success(t('inventory.createSuccess'));
             }
             setShowModal(false);
             fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Error al guardar el item.');
+            toast.error(err.response?.data?.error || t('inventory.saveError'));
         }
     };
 
     const handleDelete = async (item) => {
         const result = await Swal.fire({
-            title: '¿Estás seguro?',
-            text: `¿Deseas eliminar el material "${item.name}"? Esta acción no se puede deshacer.`,
+            title: t('inventory.deleteConfirmTitle'),
+            text: t('inventory.deleteConfirmText', { name: item.name }),
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
+            confirmButtonText: t('inventory.btnYesDelete'),
+            cancelButtonText: t('inventory.btnCancel')
         });
 
         if (result.isConfirmed) {
             try {
                 await API.delete(`/inventory/${item.id}`);
-                Swal.fire('¡Eliminado!', 'Material eliminado exitosamente.', 'success');
+                Swal.fire(t('inventory.deletedTitle'), t('inventory.deletedText'), 'success');
                 fetchData();
             } catch (err) {
-                Swal.fire('Error', err.response?.data?.error || 'Error al eliminar material.', 'error');
+                Swal.fire(t('inventory.errorTitle'), err.response?.data?.error || t('inventory.deleteError'), 'error');
             }
         }
     };
@@ -106,11 +108,11 @@ export default function Inventory() {
         <>
             <div className="content-header mb-3 d-flex align-items-center justify-content-between">
                 <div>
-                    <h1 style={{ fontWeight: 700 }}><i className="fas fa-boxes mr-2 text-danger"></i>Inventario de Materia Prima</h1>
-                    <small className="text-muted">Control de stock: Magnesio, Cromo, Zinc y más</small>
+                    <h1 style={{ fontWeight: 700 }}><i className="fas fa-boxes mr-2 text-danger"></i>{t('inventory.pageTitle')}</h1>
+                    <small className="text-muted">{t('inventory.pageSubtitle')}</small>
                 </div>
                 {hasRole('ADMIN', 'ALMACENISTA') && (
-                    <button className="btn btn-danger" onClick={openCreateModal}><i className="fas fa-plus mr-1"></i>Nuevo Item</button>
+                    <button className="btn btn-danger" onClick={openCreateModal}><i className="fas fa-plus mr-1"></i>{t('inventory.btnNewItem')}</button>
                 )}
             </div>
 
@@ -128,7 +130,7 @@ export default function Inventory() {
                             >
                                 <div style={{ fontWeight: 700, color: '#e94560' }}>{cat.name}</div>
                                 <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{totalQty.toFixed(1)} <small style={{ fontSize: '0.7rem', color: '#888' }}>{cat.unit_of_measure}</small></div>
-                                {lowStock > 0 && <small className="text-danger"><i className="fas fa-exclamation-triangle mr-1"></i>{lowStock} bajo mínimo</small>}
+                                {lowStock > 0 && <small className="text-danger"><i className="fas fa-exclamation-triangle mr-1"></i>{lowStock} {t('inventory.lowStock')}</small>}
                             </div>
                         </div>
                     );
@@ -146,7 +148,7 @@ export default function Inventory() {
                         <input
                             type="text"
                             className="form-control border-left-0"
-                            placeholder="Buscar material por nombre o SKU..."
+                            placeholder={t('inventory.searchPlaceholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             style={{ borderRadius: '0 10px 10px 0', boxShadow: 'none' }}
@@ -162,14 +164,14 @@ export default function Inventory() {
                             <table className="table table-hover mb-0">
                                 <thead style={{ background: '#1a1a2e', color: '#fff' }}>
                                     <tr>
-                                        <th>Nombre</th><th>Categoría</th><th>SKU</th><th>Disponible</th>
-                                        <th>Reservado</th><th>Mínimo</th><th>Estado</th><th>Costo Unit.</th>
-                                        {hasRole('ADMIN', 'ALMACENISTA') && <th className="text-center">Acciones</th>}
+                                        <th>{t('inventory.colName')}</th><th>{t('inventory.colCategory')}</th><th>{t('inventory.colSKU')}</th><th>{t('inventory.colAvailable')}</th>
+                                        <th>{t('inventory.colReserved')}</th><th>{t('inventory.colMin')}</th><th>{t('inventory.colStatus')}</th><th>{t('inventory.colUnitCost')}</th>
+                                        {hasRole('ADMIN', 'ALMACENISTA') && <th className="text-center">{t('inventory.colActions')}</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filtered.length === 0 ? (
-                                        <tr><td colSpan="8" className="text-center py-4 text-muted">No hay items registrados.</td></tr>
+                                        <tr><td colSpan="8" className="text-center py-4 text-muted">{t('inventory.noRecords')}</td></tr>
                                     ) : filtered.map(item => {
                                         const isLow = parseFloat(item.quantity_available) <= parseFloat(item.reorder_point);
                                         return (
@@ -182,14 +184,14 @@ export default function Inventory() {
                                                 <td>{parseFloat(item.reorder_point || 0).toFixed(2)} {item.unit_of_measure}</td>
                                                 <td>
                                                     {item.is_active === 1 || item.is_active === true
-                                                        ? <span className="badge badge-success"><i className="fas fa-check mr-1"></i>Activo</span>
-                                                        : <span className="badge badge-danger"><i className="fas fa-ban mr-1"></i>Inactivo</span>}
+                                                        ? <span className="badge badge-success"><i className="fas fa-check mr-1"></i>{t('inventory.active')}</span>
+                                                        : <span className="badge badge-danger"><i className="fas fa-ban mr-1"></i>{t('inventory.inactive')}</span>}
                                                 </td>
                                                 <td>${parseFloat(item.unit_cost || 0).toFixed(2)}</td>
                                                 {hasRole('ADMIN', 'ALMACENISTA') && (
                                                     <td className="text-center">
-                                                        <button className="btn btn-sm btn-outline-primary mr-1" onClick={() => openEditModal(item)} title="Editar Detalles"><i className="fas fa-edit"></i></button>
-                                                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(item)} title="Eliminar Registro"><i className="fas fa-trash"></i></button>
+                                                        <button className="btn btn-sm btn-outline-primary mr-1" onClick={() => openEditModal(item)} title={t('inventory.btnEdit')}><i className="fas fa-edit"></i></button>
+                                                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(item)} title={t('inventory.btnDelete')}><i className="fas fa-trash"></i></button>
                                                     </td>
                                                 )}
                                             </tr>
@@ -208,62 +210,62 @@ export default function Inventory() {
                     <div className="modal-dialog modal-lg">
                         <div className="modal-content" style={{ borderRadius: '12px' }}>
                             <div className="modal-header" style={{ background: '#1a1a2e', color: '#fff', borderRadius: '12px 12px 0 0' }}>
-                                <h5 className="modal-title">{isEditing ? 'Editar Material' : 'Nuevo Material'}</h5>
+                                <h5 className="modal-title">{isEditing ? t('inventory.modalEditTitle') : t('inventory.modalNewTitle')}</h5>
                                 <button type="button" className="close text-white" onClick={() => setShowModal(false)}><span>&times;</span></button>
                             </div>
                             <form onSubmit={handleSave}>
                                 <div className="modal-body">
                                     <div className="row">
                                         <div className="col-md-6 form-group">
-                                            <label>Nombre del Material <span className="text-danger">*</span></label>
+                                            <label>{t('inventory.modalMaterialName')} <span className="text-danger">*</span></label>
                                             <input type="text" className="form-control" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                                         </div>
                                         <div className="col-md-6 form-group">
-                                            <label>Categoría <span className="text-danger">*</span></label>
+                                            <label>{t('inventory.colCategory')} <span className="text-danger">*</span></label>
                                             <select className="form-control" required value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value })}>
-                                                <option value="">-- Seleccionar --</option>
+                                                <option value="">{t('inventory.dropdownSelect')}</option>
                                                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                             </select>
                                         </div>
 
                                         <div className="col-md-4 form-group">
-                                            <label>Código SKU</label>
+                                            <label>{t('inventory.modalSKU')}</label>
                                             <input type="text" className="form-control" value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} />
                                         </div>
                                         <div className="col-md-4 form-group">
-                                            <label>Punto Reorden (Mínimo)</label>
+                                            <label>{t('inventory.colMin')}</label>
                                             <input type="number" step="0.01" className="form-control" value={form.reorder_point} onChange={e => setForm({ ...form, reorder_point: parseFloat(e.target.value) || 0 })} />
                                         </div>
                                         <div className="col-md-4 form-group">
-                                            <label>Costo Unitario ($)</label>
+                                            <label>{t('inventory.colUnitCost')} ($)</label>
                                             <input type="number" step="0.01" className="form-control" value={form.unit_cost} onChange={e => setForm({ ...form, unit_cost: parseFloat(e.target.value) || 0 })} />
                                         </div>
 
                                         {!isEditing && (
                                             <div className="col-md-4 form-group">
-                                                <label>Stock Inicial</label>
+                                                <label>{t('inventory.modalInitialStock')}</label>
                                                 <input type="number" step="0.01" className="form-control" value={form.quantity_available} onChange={e => setForm({ ...form, quantity_available: parseFloat(e.target.value) || 0 })} />
-                                                <small className="text-muted">La cantidad posterior se ajustará por "Ajustes de Stock" para asegurar trazabilidad.</small>
+                                                <small className="text-muted">{t('inventory.modalStockWarning')}</small>
                                             </div>
                                         )}
 
                                         <div className="col-md-4 form-group">
-                                            <label>Ubicación (Bodega/Pasillo)</label>
+                                            <label>{t('inventory.modalLocation')}</label>
                                             <input type="text" className="form-control" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
                                         </div>
                                         <div className="col-md-4 form-group">
-                                            <label>Unidad de Medida <span className="text-danger">*</span></label>
+                                            <label>{t('inventory.modalUnit')} <span className="text-danger">*</span></label>
                                             <select className="form-control" required value={form.unit_of_measure_id} onChange={e => setForm({ ...form, unit_of_measure_id: e.target.value })}>
-                                                <option value="">-- Unidad --</option>
+                                                <option value="">{t('inventory.dropdownUnit')}</option>
                                                 {units.map(u => <option key={u.id} value={u.id}>{u.name} ({u.abbreviation})</option>)}
                                             </select>
                                         </div>
                                         {isEditing ? (
                                             <div className="col-md-4 form-group">
-                                                <label>Estado</label>
+                                                <label>{t('inventory.colStatus')}</label>
                                                 <select className="form-control" value={form.is_active ? '1' : '0'} onChange={e => setForm({ ...form, is_active: e.target.value === '1' })}>
-                                                    <option value="1">Activo</option>
-                                                    <option value="0">Inactivo</option>
+                                                    <option value="1">{t('inventory.active')}</option>
+                                                    <option value="0">{t('inventory.inactive')}</option>
                                                 </select>
                                             </div>
                                         ) : (
@@ -271,16 +273,16 @@ export default function Inventory() {
                                         )}
 
                                         <div className="col-md-12 form-group">
-                                            <label>Descripción / Detalles Técnicos</label>
+                                            <label>{t('inventory.modalDescription')}</label>
                                             <textarea className="form-control" rows="2" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}></textarea>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="modal-footer d-flex justify-content-between">
-                                    <small className="text-muted"><i className="fas fa-info-circle mr-1"></i> El ajuste de cantidades manual se recomienda realizarlo desde acciones para guardar log de auditoría.</small>
+                                    <small className="text-muted"><i className="fas fa-info-circle mr-1"></i> {t('inventory.modalFooterNote')}</small>
                                     <div>
-                                        <button type="button" className="btn btn-secondary mr-2" onClick={() => setShowModal(false)}>Cancelar</button>
-                                        <button type="submit" className="btn btn-danger"><i className="fas fa-save mr-1"></i>{isEditing ? 'Guardar Cambios' : 'Registrar Material'}</button>
+                                        <button type="button" className="btn btn-secondary mr-2" onClick={() => setShowModal(false)}>{t('inventory.btnCancel')}</button>
+                                        <button type="submit" className="btn btn-danger"><i className="fas fa-save mr-1"></i>{isEditing ? t('inventory.btnSave') : t('inventory.btnCreate')}</button>
                                     </div>
                                 </div>
                             </form>

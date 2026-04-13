@@ -1,13 +1,22 @@
 import { useEffect, useState } from 'react';
 import API from '../api/client';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
-const STATUS_LABELS = { PENDING: 'Pendiente', ORDERED: 'Ordenado', PARTIAL: 'Parcial', RECEIVED: 'Recibido', CANCELLED: 'Cancelado' };
 const STATUS_COLORS = { PENDING: 'warning', ORDERED: 'info', PARTIAL: 'primary', RECEIVED: 'success', CANCELLED: 'danger' };
 
 export default function Purchases() {
+    const { t } = useTranslation();
     const [purchases, setPurchases] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const STATUS_LABELS = { 
+        PENDING: t('purchases.statusPending'), 
+        ORDERED: t('purchases.statusOrdered'), 
+        PARTIAL: t('purchases.statusPartial'), 
+        RECEIVED: t('purchases.statusReceived'), 
+        CANCELLED: t('purchases.statusCancelled') 
+    };
 
     const fetchPurchases = () => {
         API.get('/purchases').then(r => { setPurchases(r.data); setLoading(false); });
@@ -16,14 +25,14 @@ export default function Purchases() {
 
     const handleReceive = async (id, currentStatus) => {
         if (['RECEIVED', 'CANCELLED'].includes(currentStatus)) return;
-        const qty = prompt('¿Cuántas unidades se están recibiendo?');
+        const qty = prompt(t('purchases.promptQty'));
         if (!qty || isNaN(qty) || parseFloat(qty) <= 0) return;
         try {
             const { data } = await API.put(`/purchases/${id}/receive`, { quantity_received: parseFloat(qty) });
             toast.success(data.message);
             fetchPurchases();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Error al registrar recepción.');
+            toast.error(err.response?.data?.error || t('purchases.receiveError'));
         }
     };
 
@@ -31,10 +40,10 @@ export default function Purchases() {
         <>
             <div className="content-header mb-3 d-flex align-items-center justify-content-between">
                 <div>
-                    <h1 style={{ fontWeight: 700 }}><i className="fas fa-shopping-cart mr-2 text-danger"></i>Órdenes de Compra</h1>
-                    <small className="text-muted">Control de compras y recepciones de materia prima</small>
+                    <h1 style={{ fontWeight: 700 }}><i className="fas fa-shopping-cart mr-2 text-danger"></i>{t('purchases.pageTitle')}</h1>
+                    <small className="text-muted">{t('purchases.pageSubtitle')}</small>
                 </div>
-                <a href="/purchases/new" className="btn btn-danger"><i className="fas fa-plus mr-1"></i>Nueva Compra</a>
+                <a href="/purchases/new" className="btn btn-danger"><i className="fas fa-plus mr-1"></i>{t('purchases.btnNew')}</a>
             </div>
 
             {loading ? <div className="text-center pt-5"><i className="fas fa-spinner fa-spin fa-3x text-secondary"></i></div> : (
@@ -43,11 +52,11 @@ export default function Purchases() {
                         <div className="table-responsive">
                             <table className="table table-hover mb-0">
                                 <thead style={{ background: '#1a1a2e', color: '#fff' }}>
-                                    <tr><th>Proveedor</th><th>Material</th><th>Cant. Ordenada</th><th>Cant. Recibida</th><th>Precio Unit.</th><th>Total</th><th>Fecha Esperada</th><th>Estado</th><th>Acciones</th></tr>
+                                    <tr><th>{t('purchases.colSupplier')}</th><th>{t('purchases.colMaterial')}</th><th>{t('purchases.colQtyOrdered')}</th><th>{t('purchases.colQtyReceived')}</th><th>{t('purchases.colPrice')}</th><th>{t('purchases.colTotal')}</th><th>{t('purchases.colExpectedDate')}</th><th>{t('purchases.colStatus')}</th><th>{t('purchases.colActions')}</th></tr>
                                 </thead>
                                 <tbody>
                                     {purchases.length === 0 ? (
-                                        <tr><td colSpan="9" className="text-center py-4 text-muted">No hay órdenes de compra registradas.</td></tr>
+                                        <tr><td colSpan="9" className="text-center py-4 text-muted">{t('purchases.noRecords')}</td></tr>
                                     ) : purchases.map(p => (
                                         <tr key={p.id}>
                                             <td><strong>{p.supplier_name}</strong></td>
@@ -64,7 +73,7 @@ export default function Purchases() {
                                             </td>
                                             <td>
                                                 {!['RECEIVED', 'CANCELLED'].includes(p.status) && (
-                                                    <button className="btn btn-sm btn-outline-success" onClick={() => handleReceive(p.id, p.status)} title="Registrar recepción">
+                                                    <button className="btn btn-sm btn-outline-success" onClick={() => handleReceive(p.id, p.status)} title={t('purchases.btnReceive')}>
                                                         <i className="fas fa-truck-loading"></i>
                                                     </button>
                                                 )}
