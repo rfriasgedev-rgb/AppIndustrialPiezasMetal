@@ -185,8 +185,6 @@ const NEXT_STATUS = {
             }
             setShowModal(false);
             loadData();
-            fetchProducts(); // or loadData
-            loadData();
         } catch (err) {
             toast.error(err.response?.data?.error || t('production.saveError'));
         }
