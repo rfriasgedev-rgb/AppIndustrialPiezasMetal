@@ -32,6 +32,7 @@ app.set('trust proxy', 1); // Trust Railway proxy
 // RUTA DE DIAGNÓSTICO PRIORITARIA (Bypass for Railway Debug)
 app.get('/api/debug/db', debugController.getDbStatus);
 app.get('/api/debug/fix-stage-enum', debugController.fixStageEnum);
+app.get('/api/debug/fix-all', debugController.fixAll);
 
 // Security & Utility Middleware
 app.use(cors({
