@@ -17,7 +17,7 @@ const TRANSITIONS = {
 // GET /production - Listar órdenes (Nivel Cabecera con Avance Global)
 const getAll = async (req, res, next) => {
     try {
-        const { status, client_id } = req.query;
+        const { status, client_id, stage } = req.query;
         let query = `
       SELECT po.id, po.order_number, po.status, po.priority,
              po.estimated_delivery, po.actual_delivery, po.created_at,
@@ -31,6 +31,11 @@ const getAll = async (req, res, next) => {
         const params = [];
         if (status) { query += ' AND po.status = ?'; params.push(status); }
         if (client_id) { query += ' AND po.client_id = ?'; params.push(client_id); }
+        // Filtrar por etapa de pieza (igual que My Station)
+        if (stage) {
+            query += ' AND EXISTS (SELECT 1 FROM production_order_details pod WHERE pod.order_id = po.id AND pod.stage = ?)';
+            params.push(stage);
+        }
         query += ' ORDER BY FIELD(po.priority,"URGENT","HIGH","NORMAL","LOW"), po.created_at DESC LIMIT 1000';
         const [rows] = await pool.query(query, params);
 

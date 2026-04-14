@@ -35,7 +35,7 @@ const NEXT_STATUS = {
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filterStatus, setFilterStatus] = useState('');
+    const [filterStage, setFilterStage] = useState(''); // '' = All
     const { hasRole } = useAuth();
 
     // Novedades para el Modal
@@ -59,10 +59,9 @@ const NEXT_STATUS = {
 
     const loadData = async () => {
         try {
-            const params = filterStatus ? `?status=${filterStatus}` : '';
-            const [oRes] = await Promise.all([
-                API.get(`/production${params}`)
-            ]);
+            // Filtra por etapa de pieza (mismas pestañas que My Station)
+            const params = filterStage ? `?stage=${filterStage}` : '';
+            const oRes = await API.get(`/production${params}`);
             setOrders(oRes.data);
             setLoading(false);
         } catch (error) {
@@ -71,7 +70,7 @@ const NEXT_STATUS = {
         }
     };
 
-    useEffect(() => { loadData(); }, [filterStatus]);
+    useEffect(() => { loadData(); }, [filterStage]);
 
     const openCreateModal = () => {
         setIsEditing(false);
@@ -251,12 +250,30 @@ const NEXT_STATUS = {
                 )}
             </div>
 
-            {/* Filtros por estado */}
+            {/* Filtros por etapa de pieza — iguales a My Station */}
             <div className="card mb-3">
-                <div className="card-body py-2 d-flex gap-2 flex-wrap">
-                    <button className={`btn btn-sm ${filterStatus === '' ? 'btn-dark' : 'btn-outline-dark'} mr-1`} onClick={() => setFilterStatus('')}>{t('production.filterAll')}</button>
-                    {Object.entries(STATUS_LABELS).map(([k, v]) => (
-                        <button key={k} className={`btn btn-sm mr-1 ${filterStatus === k ? 'btn-danger' : 'btn-outline-secondary'}`} onClick={() => setFilterStatus(k)}>{v}</button>
+                <div className="card-body py-2 d-flex gap-2 flex-wrap" style={{ overflowX: 'auto' }}>
+                    <button
+                        className={`btn btn-sm mr-1 ${filterStage === '' ? 'btn-dark' : 'btn-outline-dark'}`}
+                        onClick={() => setFilterStage('')}
+                    >
+                        {t('production.filterAll')}
+                    </button>
+                    {[
+                        { key: 'DESIGN',   label: t('workQueue.stageDesign') },
+                        { key: 'CUTTING',  label: t('workQueue.stageCutting') },
+                        { key: 'BENDING',  label: t('workQueue.stageBending') },
+                        { key: 'ASSEMBLY', label: t('workQueue.stageAssembly') },
+                        { key: 'WELDING',  label: t('workQueue.stageWelding') },
+                        { key: 'CLEANING', label: t('workQueue.stageCleaning') },
+                    ].map(({ key, label }) => (
+                        <button
+                            key={key}
+                            className={`btn btn-sm mr-1 ${filterStage === key ? 'btn-success font-weight-bold' : 'btn-outline-secondary'}`}
+                            onClick={() => setFilterStage(key)}
+                        >
+                            {label}
+                        </button>
                     ))}
                 </div>
             </div>
