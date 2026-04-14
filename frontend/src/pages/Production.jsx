@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import ModalClientSearch from '../components/ModalClientSearch';
 import ModalProductSearch from '../components/ModalProductSearch';
+import ProductionHistoryModal from '../components/ProductionHistoryModal';
 
 export default function Production() {
     const { t } = useTranslation();
@@ -40,6 +41,9 @@ const NEXT_STATUS = {
     // Novedades para el Modal
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+
+    // Modal de Historial de Producción
+    const [historyModal, setHistoryModal] = useState(null); // { id, order_number }
 
     // Search Modals State
     const [showClientModal, setShowClientModal] = useState(false);
@@ -298,10 +302,14 @@ const NEXT_STATUS = {
                                             </td>
                                             <td>{o.estimated_delivery ? new Date(o.estimated_delivery).toLocaleDateString() : '—'}</td>
                                             <td>
-                                                {/* Botón de Avanzar quitado en lista general porque ahora el avance es por Ítem en el Detalle */}
-                                                <a href={`/production/${o.id}`} className="btn btn-sm btn-outline-info mr-1" title={t('production.btnViewDetail')}>
-                                                    <i className="fas fa-project-diagram"></i>
-                                                </a>
+                                                {/* Botón de Historial de Producción */}
+                                                <button
+                                                    className="btn btn-sm btn-outline-info mr-1"
+                                                    title="Ver historial de producción"
+                                                    onClick={() => setHistoryModal({ id: o.id, order_number: o.order_number })}
+                                                >
+                                                    <i className="fas fa-history"></i>
+                                                </button>
 
                                                 {/* Botón de Requisición */}
                                                 {(o.status === 'PENDING_MATERIAL' || o.status === 'IN_PROGRESS' || o.status === 'DRAFT') && hasRole('ADMIN', 'SUPERVISOR') && (
@@ -484,6 +492,14 @@ const NEXT_STATUS = {
                 onClose={() => setShowProductModal(false)}
                 onSelect={handleProductSelect}
             />
+
+            {historyModal && (
+                <ProductionHistoryModal
+                    orderId={historyModal.id}
+                    orderNumber={historyModal.order_number}
+                    onClose={() => setHistoryModal(null)}
+                />
+            )}
         </>
     );
 }
