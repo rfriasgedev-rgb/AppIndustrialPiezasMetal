@@ -585,7 +585,12 @@
     "btnPrintReqTitle": "Generate and print material list",
     "selectLine": "-- Select Line --",
     "finishProduction": "Finish Production",
-    "moveTo": "Move to {{stage}}"
+    "moveTo": "Move to {{stage}}",
+    "notesLabel": "Stage Notes",
+    "notesPlaceholder": "Ex: Cut completed without incidents...",
+    "cancelBtn": "Cancel",
+    "saving": "Saving...",
+    "confirmAdvance": "Confirm Advance"
   },
   "modalClientSearch": {
     "title": "Search Client",
@@ -623,6 +628,36 @@
     "btnAdd": "Add",
     "noItems": "No materials found in inventory.",
     "na": "N/A"
+  },
+  "productionHistory": {
+    "title": "Production History",
+    "loading": "Loading history...",
+    "loadError": "Could not load history.",
+    "selectPiece": "Select Part",
+    "lblPiece": "Part",
+    "lblQty": "Quantity",
+    "lblCurrentStage": "Current Stage",
+    "noLogs": "No history records for this part.",
+    "lblStarted": "Started:",
+    "lblCompleted": "Completed:",
+    "lblDuration": "Duration:",
+    "lblOperator": "Unknown",
+    "lblNoRole": "No role",
+    "btnClose": "Close",
+    "units": "unit(s)",
+    "stages": {
+      "DESIGN": "Design",
+      "PENDING_MATERIAL": "Pending Material",
+      "CUTTING": "Cutting",
+      "BENDING": "Bending",
+      "ASSEMBLY": "Assembly",
+      "WELDING": "Welding",
+      "CLEANING": "Production Line",
+      "PAINTING": "Painting",
+      "QUALITY_CHECK": "Quality Check",
+      "READY": "Ready",
+      "CANCELLED": "Cancelled"
+    }
   }
 }
 

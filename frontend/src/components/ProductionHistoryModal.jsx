@@ -2,42 +2,41 @@ import { useEffect, useState } from 'react';
 import API from '../api/client';
 import { useTranslation } from 'react-i18next';
 
-const STAGE_LABELS = {
-    DESIGN:          { label: 'Diseño',             icon: 'fas fa-drafting-compass', color: '#6366f1' },
-    PENDING_MATERIAL:{ label: 'Esperando Material', icon: 'fas fa-boxes',            color: '#f59e0b' },
-    CUTTING:         { label: 'Corte',              icon: 'fas fa-cut',              color: '#3b82f6' },
-    BENDING:         { label: 'Doblado',            icon: 'fas fa-wave-square',      color: '#8b5cf6' },
-    ASSEMBLY:        { label: 'Ensamblaje',         icon: 'fas fa-puzzle-piece',     color: '#06b6d4' },
-    WELDING:         { label: 'Soldadura',          icon: 'fas fa-fire',             color: '#f97316' },
-    CLEANING:        { label: 'Línea de Producción',icon: 'fas fa-industry',         color: '#10b981' },
-    PAINTING:        { label: 'Pintura',            icon: 'fas fa-paint-roller',     color: '#ec4899' },
-    QUALITY_CHECK:   { label: 'Control Calidad',    icon: 'fas fa-check-double',     color: '#14b8a6' },
-    READY:           { label: 'Listo',              icon: 'fas fa-flag-checkered',   color: '#22c55e' },
-    CANCELLED:       { label: 'Cancelado',          icon: 'fas fa-ban',              color: '#ef4444' },
+const STAGE_CONFIG = {
+    DESIGN:          { icon: 'fas fa-drafting-compass', color: '#6366f1' },
+    PENDING_MATERIAL:{ icon: 'fas fa-boxes',            color: '#f59e0b' },
+    CUTTING:         { icon: 'fas fa-cut',              color: '#3b82f6' },
+    BENDING:         { icon: 'fas fa-wave-square',      color: '#8b5cf6' },
+    ASSEMBLY:        { icon: 'fas fa-puzzle-piece',     color: '#06b6d4' },
+    WELDING:         { icon: 'fas fa-fire',             color: '#f97316' },
+    CLEANING:        { icon: 'fas fa-industry',         color: '#10b981' },
+    PAINTING:        { icon: 'fas fa-paint-roller',     color: '#ec4899' },
+    QUALITY_CHECK:   { icon: 'fas fa-check-double',     color: '#14b8a6' },
+    READY:           { icon: 'fas fa-flag-checkered',   color: '#22c55e' },
+    CANCELLED:       { icon: 'fas fa-ban',              color: '#ef4444' },
 };
 
-function formatDate(dateStr) {
+function formatDate(dateStr, locale) {
     if (!dateStr) return '—';
-    const d = new Date(dateStr);
-    return d.toLocaleString('es-MX', {
+    return new Date(dateStr).toLocaleString(locale === 'es' ? 'es-MX' : 'en-US', {
         year: 'numeric', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+        hour: '2-digit', minute: '2-digit',
     });
 }
 
-function getDuration(start, end) {
+function getDuration(start, end, t) {
     if (!start || !end) return null;
     const ms = new Date(end) - new Date(start);
-    const mins = Math.floor(ms / 60000);
-    const hrs  = Math.floor(mins / 60);
-    const days = Math.floor(hrs / 24);
+    const mins  = Math.floor(ms / 60000);
+    const hrs   = Math.floor(mins / 60);
+    const days  = Math.floor(hrs / 24);
     if (days > 0)  return `${days}d ${hrs % 24}h`;
     if (hrs > 0)   return `${hrs}h ${mins % 60}m`;
     return `${mins}m`;
 }
 
 export default function ProductionHistoryModal({ orderId, orderNumber, onClose }) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState(null);
@@ -48,7 +47,6 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
         API.get(`/production/${orderId}`)
             .then(res => {
                 setData(res.data);
-                // Auto-seleccionar el primer item
                 if (res.data.items?.length > 0) {
                     setSelectedItem(res.data.items[0].id);
                 }
@@ -57,12 +55,16 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
             .catch(() => setLoading(false));
     }, [orderId]);
 
-    // Filtrar logs del item seleccionado, ordenados cronológicamente
+    // Nombre de etapa localizado
+    const stageName = (key) => t(`productionHistory.stages.${key}`, key);
+
+    // Logs del item seleccionado, ordenados cronológicamente
     const itemLogs = (data?.all_logs || [])
         .filter(l => l.order_detail_id === selectedItem)
         .sort((a, b) => new Date(a.stage_started_at) - new Date(b.stage_started_at));
 
     const currentItem = data?.items?.find(i => i.id === selectedItem);
+    const locale = i18n.language;
 
     return (
         <div
@@ -88,7 +90,7 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
                     <div>
                         <h5 style={{ color: '#fff', margin: 0, fontWeight: 700, fontSize: 18 }}>
                             <i className="fas fa-history mr-2"></i>
-                            Historial de Producción
+                            {t('productionHistory.title')}
                         </h5>
                         <small style={{ color: '#a5b4fc' }}>
                             {data?.order_number || orderNumber} — {data?.client_name || ''}
@@ -107,12 +109,12 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: 60 }}>
                         <i className="fas fa-spinner fa-spin fa-2x" style={{ color: '#4f46e5' }}></i>
-                        <p style={{ marginTop: 12, color: '#6b7280' }}>Cargando historial...</p>
+                        <p style={{ marginTop: 12, color: '#6b7280' }}>{t('productionHistory.loading')}</p>
                     </div>
                 ) : !data ? (
                     <div style={{ textAlign: 'center', padding: 60, color: '#ef4444' }}>
                         <i className="fas fa-exclamation-circle fa-2x"></i>
-                        <p style={{ marginTop: 12 }}>No se pudo cargar el historial.</p>
+                        <p style={{ marginTop: 12 }}>{t('productionHistory.loadError')}</p>
                     </div>
                 ) : (
                     <div>
@@ -120,7 +122,7 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
                         {data.items?.length > 1 && (
                             <div style={{ padding: '12px 24px', background: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
                                 <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1 }}>
-                                    Seleccionar Pieza
+                                    {t('productionHistory.selectPiece')}
                                 </label>
                                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
                                     {data.items.map(item => (
@@ -142,7 +144,7 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
                             </div>
                         )}
 
-                        {/* Info de la pieza */}
+                        {/* Info de la pieza seleccionada */}
                         {currentItem && (
                             <div style={{
                                 padding: '14px 24px',
@@ -151,18 +153,18 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
                                 display: 'flex', gap: 24, flexWrap: 'wrap',
                             }}>
                                 <div>
-                                    <span style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', fontWeight: 600 }}>Pieza</span>
+                                    <span style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', fontWeight: 600 }}>{t('productionHistory.lblPiece')}</span>
                                     <div style={{ fontWeight: 700, color: '#1e1b4b' }}>{currentItem.product_name}</div>
                                 </div>
                                 <div>
-                                    <span style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', fontWeight: 600 }}>Cantidad</span>
-                                    <div style={{ fontWeight: 700, color: '#1e1b4b' }}>{currentItem.quantity} und(s)</div>
+                                    <span style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', fontWeight: 600 }}>{t('productionHistory.lblQty')}</span>
+                                    <div style={{ fontWeight: 700, color: '#1e1b4b' }}>{currentItem.quantity} {t('productionHistory.units')}</div>
                                 </div>
                                 <div>
-                                    <span style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', fontWeight: 600 }}>Etapa Actual</span>
-                                    <div style={{ fontWeight: 700, color: STAGE_LABELS[currentItem.stage]?.color || '#6b7280' }}>
-                                        <i className={`${STAGE_LABELS[currentItem.stage]?.icon || 'fas fa-circle'} mr-1`}></i>
-                                        {STAGE_LABELS[currentItem.stage]?.label || currentItem.stage}
+                                    <span style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', fontWeight: 600 }}>{t('productionHistory.lblCurrentStage')}</span>
+                                    <div style={{ fontWeight: 700, color: STAGE_CONFIG[currentItem.stage]?.color || '#6b7280' }}>
+                                        <i className={`${STAGE_CONFIG[currentItem.stage]?.icon || 'fas fa-circle'} mr-1`}></i>
+                                        {stageName(currentItem.stage)}
                                     </div>
                                 </div>
                             </div>
@@ -172,20 +174,21 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
                         <div style={{ padding: '24px 28px', maxHeight: 480, overflowY: 'auto' }}>
                             {itemLogs.length === 0 ? (
                                 <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>
-                                    <i className="fas fa-inbox fa-2x" style={{ marginBottom: 12 }}></i>
-                                    <p>No hay registros de historial para esta pieza.</p>
+                                    <i className="fas fa-inbox fa-2x" style={{ marginBottom: 12, display: 'block' }}></i>
+                                    <p>{t('productionHistory.noLogs')}</p>
                                 </div>
                             ) : (
                                 <div style={{ position: 'relative' }}>
-                                    {/* Línea vertical */}
+                                    {/* Línea vertical del timeline */}
                                     <div style={{
                                         position: 'absolute', left: 19, top: 0, bottom: 0,
                                         width: 2, background: 'linear-gradient(to bottom, #4f46e5, #e5e7eb)',
                                     }}></div>
 
                                     {itemLogs.map((log, idx) => {
-                                        const stageInfo = STAGE_LABELS[log.to_status] || { label: log.to_status, icon: 'fas fa-circle', color: '#6b7280' };
-                                        const duration = getDuration(log.stage_started_at, log.stage_completed_at);
+                                        const cfg = STAGE_CONFIG[log.to_status] || { icon: 'fas fa-circle', color: '#6b7280' };
+                                        const label = stageName(log.to_status);
+                                        const duration = getDuration(log.stage_started_at, log.stage_completed_at, t);
                                         const isLast = idx === itemLogs.length - 1;
 
                                         return (
@@ -193,46 +196,43 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
                                                 display: 'flex', gap: 16, marginBottom: isLast ? 0 : 24,
                                                 position: 'relative',
                                             }}>
-                                                {/* Icono del paso */}
+                                                {/* Ícono de etapa */}
                                                 <div style={{
                                                     width: 40, height: 40, borderRadius: '50%',
-                                                    background: stageInfo.color,
+                                                    background: cfg.color,
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                     flexShrink: 0, zIndex: 1,
-                                                    boxShadow: `0 0 0 4px white, 0 0 0 6px ${stageInfo.color}33`,
+                                                    boxShadow: `0 0 0 4px white, 0 0 0 6px ${cfg.color}33`,
                                                 }}>
-                                                    <i className={stageInfo.icon} style={{ color: '#fff', fontSize: 16 }}></i>
+                                                    <i className={cfg.icon} style={{ color: '#fff', fontSize: 16 }}></i>
                                                 </div>
 
-                                                {/* Contenido */}
+                                                {/* Tarjeta del paso */}
                                                 <div style={{
                                                     flex: 1,
                                                     background: '#f9fafb',
-                                                    border: `1px solid ${stageInfo.color}44`,
-                                                    borderLeft: `4px solid ${stageInfo.color}`,
+                                                    border: `1px solid ${cfg.color}44`,
+                                                    borderLeft: `4px solid ${cfg.color}`,
                                                     borderRadius: '0 12px 12px 0',
                                                     padding: '14px 16px',
                                                 }}>
-                                                    {/* Cabecera: etapa + orden + fecha */}
+                                                    {/* Cabecera: nombre etapa + N° orden + fecha */}
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                                                         <div>
                                                             <span style={{
-                                                                background: stageInfo.color,
-                                                                color: '#fff', borderRadius: 20,
-                                                                padding: '2px 12px', fontSize: 12, fontWeight: 700,
+                                                                background: cfg.color, color: '#fff',
+                                                                borderRadius: 20, padding: '2px 12px',
+                                                                fontSize: 12, fontWeight: 700,
                                                             }}>
-                                                                {stageInfo.label}
+                                                                {label}
                                                             </span>
-                                                            <span style={{
-                                                                marginLeft: 8, fontSize: 12, color: '#6b7280',
-                                                                fontFamily: 'monospace',
-                                                            }}>
+                                                            <span style={{ marginLeft: 8, fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>
                                                                 {data.order_number}
                                                             </span>
                                                         </div>
                                                         <span style={{ fontSize: 12, color: '#9ca3af' }}>
                                                             <i className="fas fa-calendar-alt mr-1"></i>
-                                                            {formatDate(log.stage_started_at)}
+                                                            {formatDate(log.stage_started_at, locale)}
                                                         </span>
                                                     </div>
 
@@ -241,17 +241,17 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                                             <div style={{
                                                                 width: 32, height: 32, borderRadius: '50%',
-                                                                background: `${stageInfo.color}22`,
+                                                                background: `${cfg.color}22`,
                                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                             }}>
-                                                                <i className="fas fa-user" style={{ color: stageInfo.color, fontSize: 14 }}></i>
+                                                                <i className="fas fa-user" style={{ color: cfg.color, fontSize: 14 }}></i>
                                                             </div>
                                                             <div>
                                                                 <div style={{ fontWeight: 700, fontSize: 14, color: '#1f2937' }}>
-                                                                    {log.operator_name || log.performed_by_name || 'Desconocido'}
+                                                                    {log.operator_name || log.performed_by_name || t('productionHistory.lblOperator')}
                                                                 </div>
                                                                 <div style={{ fontSize: 12, color: '#6b7280' }}>
-                                                                    {log.operator_role || 'Sin rol'}
+                                                                    {log.operator_role || t('productionHistory.lblNoRole')}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -264,7 +264,7 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
                                                                 fontSize: 12, color: '#4b5563',
                                                             }}>
                                                                 <i className="fas fa-clock" style={{ color: '#4f46e5' }}></i>
-                                                                Duración: <strong>{duration}</strong>
+                                                                {t('productionHistory.lblDuration')} <strong>{duration}</strong>
                                                             </div>
                                                         )}
 
@@ -276,7 +276,7 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
                                                                 fontSize: 12, color: '#15803d',
                                                             }}>
                                                                 <i className="fas fa-check-circle"></i>
-                                                                Completado: {formatDate(log.stage_completed_at)}
+                                                                {t('productionHistory.lblCompleted')} {formatDate(log.stage_completed_at, locale)}
                                                             </div>
                                                         )}
                                                     </div>
@@ -319,7 +319,7 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
                             fontWeight: 600, cursor: 'pointer', fontSize: 14,
                         }}
                     >
-                        <i className="fas fa-times mr-2"></i>Cerrar
+                        <i className="fas fa-times mr-2"></i>{t('productionHistory.btnClose')}
                     </button>
                 </div>
             </div>

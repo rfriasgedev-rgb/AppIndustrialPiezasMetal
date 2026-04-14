@@ -585,7 +585,12 @@
     "btnPrintReqTitle": "Generar e imprimir lista de materiales",
     "selectLine": "-- Seleccionar Línea --",
     "finishProduction": "Finalizar Producción",
-    "moveTo": "Pasar a {{stage}}"
+    "moveTo": "Pasar a {{stage}}",
+    "notesLabel": "Notas de la Etapa",
+    "notesPlaceholder": "Ej: Corte completado sin incidencias...",
+    "cancelBtn": "Cancelar",
+    "saving": "Guardando...",
+    "confirmAdvance": "Confirmar Avance"
   },
   "modalClientSearch": {
     "title": "Buscar Cliente",
@@ -623,6 +628,36 @@
     "btnAdd": "Añadir",
     "noItems": "No se encontraron materiales en el inventario.",
     "na": "N/A"
+  },
+  "productionHistory": {
+    "title": "Historial de Producción",
+    "loading": "Cargando historial...",
+    "loadError": "No se pudo cargar el historial.",
+    "selectPiece": "Seleccionar Pieza",
+    "lblPiece": "Pieza",
+    "lblQty": "Cantidad",
+    "lblCurrentStage": "Etapa Actual",
+    "noLogs": "No hay registros de historial para esta pieza.",
+    "lblStarted": "Inicio:",
+    "lblCompleted": "Completado:",
+    "lblDuration": "Duración:",
+    "lblOperator": "Desconocido",
+    "lblNoRole": "Sin rol",
+    "btnClose": "Cerrar",
+    "units": "und(s)",
+    "stages": {
+      "DESIGN": "Diseño",
+      "PENDING_MATERIAL": "Esperando Material",
+      "CUTTING": "Corte",
+      "BENDING": "Doblado",
+      "ASSEMBLY": "Ensamblaje",
+      "WELDING": "Soldadura",
+      "CLEANING": "Línea de Producción",
+      "PAINTING": "Pintura",
+      "QUALITY_CHECK": "Control de Calidad",
+      "READY": "Lista",
+      "CANCELLED": "Cancelado"
+    }
   }
 }
 
