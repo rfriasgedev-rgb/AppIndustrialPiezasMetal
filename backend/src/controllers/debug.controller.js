@@ -2,6 +2,38 @@ const { pool } = require('../db/connection');
 const fs = require('fs');
 const path = require('path');
 
+// ENDPOINT DE EMERGENCIA: Aplica el ALTER TABLE del ENUM directamente en la DB live
+exports.fixStageEnum = async (req, res) => {
+    try {
+        await pool.query(`
+            ALTER TABLE production_order_details
+            MODIFY COLUMN stage ENUM(
+                'DESIGN',
+                'PENDING_MATERIAL',
+                'CUTTING',
+                'BENDING',
+                'ASSEMBLY',
+                'WELDING',
+                'CLEANING',
+                'PAINTING',
+                'QUALITY_CHECK',
+                'READY',
+                'CANCELLED'
+            ) NOT NULL DEFAULT 'DESIGN'
+        `);
+
+        // Verificar el resultado
+        const [cols] = await pool.query(`SHOW COLUMNS FROM production_order_details WHERE Field = 'stage'`);
+        res.json({ 
+            success: true, 
+            message: 'ENUM de stage actualizado correctamente.',
+            column: cols[0]
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
 exports.getDbStatus = async (req, res) => {
     try {
         const results = {};
