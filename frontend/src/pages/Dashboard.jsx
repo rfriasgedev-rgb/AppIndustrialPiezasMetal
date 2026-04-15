@@ -134,7 +134,7 @@ export default function Dashboard() {
                         </div>
                         <div className="card-body">
                             <div className="d-flex justify-content-between text-center" style={{ overflowX: 'auto', paddingBottom: '10px' }}>
-                                {['DESIGN', 'PENDING_MATERIAL', 'CUTTING', 'BENDING', 'ASSEMBLY', 'WELDING', 'CLEANING', 'PAINTING', 'QUALITY_CHECK', 'READY'].map((st, idx, arr) => {
+                                {['DESIGN', 'CUTTING', 'BENDING', 'ASSEMBLY', 'WELDING', 'CLEANING'].map((st, idx, arr) => {
                                     const qty = itemsByStage?.find(i => i.stage === st)?.count || 0;
                                     const color = STATUS_COLORS[st];
                                     return (
