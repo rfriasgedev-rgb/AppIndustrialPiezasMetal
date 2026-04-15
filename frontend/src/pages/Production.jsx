@@ -394,8 +394,13 @@ const NEXT_STATUS = {
                             <table className="table table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th>{t('production.colOrderNo')}</th><th>{t('production.colClient')}</th><th>{t('production.colProduct')}</th><th>{t('production.colQty')}</th>
-                                        <th>{t('production.colStatus')}</th><th>{t('production.colPriority')}</th><th>{t('production.colEstDelivery')}</th><th>{t('production.colActions')}</th>
+                                        <th>{t('production.colOrderNo')}</th>
+                                        <th>{t('production.colClient')}</th>
+                                        <th>{t('production.colQty')}</th>
+                                        <th>{t('production.colEstDelivery')}</th>
+                                        <th>{t('production.colStatus')}</th>
+                                        <th>{t('production.colPriority')}</th>
+                                        <th>{t('production.colActions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -403,14 +408,25 @@ const NEXT_STATUS = {
                                         <tr><td colSpan="7" className="text-center py-4 text-muted">{t('production.noRecords')}</td></tr>
                                     ) : orders.map(o => (
                                         <tr key={o.id}>
+                                            {/* N° Orden */}
                                             <td><strong style={{ color: '#e94560' }}>{o.order_number}</strong></td>
+
+                                            {/* Cliente */}
                                             <td>{o.client_name}</td>
+
+                                            {/* Cantidad de piezas */}
                                             <td>
                                                 <div className="d-flex align-items-center">
                                                     <i className="fas fa-layer-group text-secondary mr-2"></i>
-                                                    <strong>{o.total_items}</strong> <span className="text-muted ml-1" style={{ fontSize: '0.9rem' }}>{t('production.lblPieces')}</span>
+                                                    <strong>{o.total_items}</strong>
+                                                    <span className="text-muted ml-1" style={{ fontSize: '0.9rem' }}>{t('production.lblPieces')}</span>
                                                 </div>
                                             </td>
+
+                                            {/* Fecha estimada de entrega */}
+                                            <td>{o.estimated_delivery ? new Date(o.estimated_delivery).toLocaleDateString() : '—'}</td>
+
+                                            {/* Estado + barra de progreso */}
                                             <td>
                                                 <span className={`badge badge-${STATUS_COLORS[o.status] || 'secondary'}`} style={{ padding: '5px 10px', borderRadius: '6px' }}>
                                                     {o.status === 'READY_FOR_DELIVERY' ? t('production.statusReady') : (o.status === 'IN_PROGRESS' ? t('production.statusInProgress') : STATUS_LABELS[o.status] || o.status)}
@@ -421,12 +437,15 @@ const NEXT_STATUS = {
                                                     </div>
                                                 )}
                                             </td>
+
+                                            {/* Prioridad */}
                                             <td>
                                                 <span className={`badge badge-${PRIORITY_BADGES[o.priority]}`} style={{ padding: '5px 10px', borderRadius: '6px' }}>
                                                     {o.priority}
                                                 </span>
                                             </td>
-                                            <td>{o.estimated_delivery ? new Date(o.estimated_delivery).toLocaleDateString() : '—'}</td>
+
+                                            {/* Acciones */}
                                             <td>
                                                 {/* Botón de Historial de Producción */}
                                                 <button
