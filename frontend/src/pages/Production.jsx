@@ -414,11 +414,11 @@ const NEXT_STATUS = {
                                             {/* Cliente */}
                                             <td>{o.client_name}</td>
 
-                                            {/* Cantidad de piezas */}
+                                            {/* Cantidad total de piezas */}
                                             <td>
                                                 <div className="d-flex align-items-center">
                                                     <i className="fas fa-layer-group text-secondary mr-2"></i>
-                                                    <strong>{o.total_items}</strong>
+                                                    <strong>{o.total_qty}</strong>
                                                     <span className="text-muted ml-1" style={{ fontSize: '0.9rem' }}>{t('production.lblPieces')}</span>
                                                 </div>
                                             </td>

@@ -23,6 +23,7 @@ const getAll = async (req, res, next) => {
              po.estimated_delivery, po.actual_delivery, po.created_at,
              c.company_name as client_name, u.full_name as created_by_name,
              (SELECT COUNT(*) FROM production_order_details WHERE order_id = po.id) as total_items,
+             (SELECT COALESCE(SUM(quantity), 0) FROM production_order_details WHERE order_id = po.id) as total_qty,
              (SELECT COUNT(*) FROM production_order_details WHERE order_id = po.id AND stage = 'READY') as ready_items
       FROM production_orders po
       JOIN clients c ON po.client_id = c.id
