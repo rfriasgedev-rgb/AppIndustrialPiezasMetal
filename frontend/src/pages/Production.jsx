@@ -397,9 +397,9 @@ const NEXT_STATUS = {
                                         <th>{t('production.colOrderNo')}</th>
                                         <th>{t('production.colClient')}</th>
                                         <th>{t('production.colQty')}</th>
+                                        <th>{t('production.colPriority')}</th>
                                         <th>{t('production.colEstDelivery')}</th>
                                         <th>{t('production.colStatus')}</th>
-                                        <th>{t('production.colPriority')}</th>
                                         <th>{t('production.colActions')}</th>
                                     </tr>
                                 </thead>
@@ -423,6 +423,13 @@ const NEXT_STATUS = {
                                                 </div>
                                             </td>
 
+                                            {/* Prioridad */}
+                                            <td>
+                                                <span className={`badge badge-${PRIORITY_BADGES[o.priority]}`} style={{ padding: '5px 10px', borderRadius: '6px' }}>
+                                                    {o.priority}
+                                                </span>
+                                            </td>
+
                                             {/* Fecha estimada de entrega */}
                                             <td>{o.estimated_delivery ? new Date(o.estimated_delivery).toLocaleDateString() : '—'}</td>
 
@@ -436,13 +443,6 @@ const NEXT_STATUS = {
                                                         <div className="progress-bar bg-success" role="progressbar" style={{ width: `${o.progress}%` }} aria-valuenow={o.progress} aria-valuemin="0" aria-valuemax="100"></div>
                                                     </div>
                                                 )}
-                                            </td>
-
-                                            {/* Prioridad */}
-                                            <td>
-                                                <span className={`badge badge-${PRIORITY_BADGES[o.priority]}`} style={{ padding: '5px 10px', borderRadius: '6px' }}>
-                                                    {o.priority}
-                                                </span>
                                             </td>
 
                                             {/* Acciones */}

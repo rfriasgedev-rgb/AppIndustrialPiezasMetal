@@ -41,9 +41,9 @@ const getAll = async (req, res, next) => {
             query += ' AND (po.order_number LIKE ? OR c.company_name LIKE ?)';
             params.push(`%${search}%`, `%${search}%`);
         }
-        // Filtro por rango de fechas de creación
-        if (date_from) { query += ' AND DATE(po.created_at) >= ?'; params.push(date_from); }
-        if (date_to)   { query += ' AND DATE(po.created_at) <= ?'; params.push(date_to); }
+        // Filtro por rango de fechas de entrega estimada
+        if (date_from) { query += ' AND DATE(po.estimated_delivery) >= ?'; params.push(date_from); }
+        if (date_to)   { query += ' AND DATE(po.estimated_delivery) <= ?'; params.push(date_to); }
 
         query += ' ORDER BY FIELD(po.priority,"URGENT","HIGH","NORMAL","LOW"), po.created_at DESC LIMIT 1000';
         const [rows] = await pool.query(query, params);
