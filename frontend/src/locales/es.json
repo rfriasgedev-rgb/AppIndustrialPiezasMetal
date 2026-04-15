@@ -241,7 +241,13 @@
     "globalNotesPlaceholder": "Ej: Entregar primero las piezas urgentes.",
     "btnCancel": "Cancelar",
     "btnSaveEdit": "Guardar Cambios de Cabecera",
-    "btnEmitOrder": "Emitir Orden"
+    "btnEmitOrder": "Emitir Orden",
+    "searchLabel": "Orden / Cliente",
+    "searchPlaceholder": "OP-2026-00001 o nombre del cliente...",
+    "dateFrom": "Desde",
+    "dateTo": "Hasta",
+    "btnSearch": "Buscar",
+    "btnClear": "Limpiar"
   },
   "productionLines": {
     "loadError": "Error cargando datos",

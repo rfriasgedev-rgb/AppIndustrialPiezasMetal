@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import API from '../api/client';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
@@ -38,6 +38,12 @@ const NEXT_STATUS = {
     const [filterStage, setFilterStage] = useState(''); // '' = All
     const { hasRole } = useAuth();
 
+    // Búsqueda
+    const [search, setSearch] = useState('');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
+    const debounceRef = useRef(null);
+
     // Novedades para el Modal
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -57,20 +63,58 @@ const NEXT_STATUS = {
         items: [] // { product_id, name, part_number, requires_assembly, quantity, notes }
     });
 
-    const loadData = async () => {
+    const loadData = useCallback(async (overrideSearch, overrideDateFrom, overrideDateTo) => {
         try {
-            // Filtra por etapa de pieza (mismas pestañas que My Station)
-            const params = filterStage ? `?stage=${filterStage}` : '';
-            const oRes = await API.get(`/production${params}`);
+            const q = new URLSearchParams();
+            if (filterStage) q.set('stage', filterStage);
+            const s = overrideSearch    !== undefined ? overrideSearch    : search;
+            const df = overrideDateFrom !== undefined ? overrideDateFrom  : dateFrom;
+            const dt = overrideDateTo   !== undefined ? overrideDateTo    : dateTo;
+            if (s)  q.set('search',    s);
+            if (df) q.set('date_from', df);
+            if (dt) q.set('date_to',   dt);
+            const oRes = await API.get(`/production${q.toString() ? '?' + q.toString() : ''}`);
             setOrders(oRes.data);
             setLoading(false);
         } catch (error) {
             toast.error(t('production.fetchError'));
             setLoading(false);
         }
+    }, [filterStage, search, dateFrom, dateTo]);
+
+    useEffect(() => { setLoading(true); loadData(); }, [filterStage]);
+
+    // Auto-search con debounce 400ms al escribir en el campo de texto
+    const handleSearchChange = (val) => {
+        setSearch(val);
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => loadData(val, dateFrom, dateTo), 400);
     };
 
-    useEffect(() => { loadData(); }, [filterStage]);
+    const handleDateFromChange = (val) => {
+        setDateFrom(val);
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => loadData(search, val, dateTo), 400);
+    };
+
+    const handleDateToChange = (val) => {
+        setDateTo(val);
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => loadData(search, dateFrom, val), 400);
+    };
+
+    const handleSearchBtn = () => {
+        clearTimeout(debounceRef.current);
+        setLoading(true);
+        loadData(search, dateFrom, dateTo);
+    };
+
+    const handleClearSearch = () => {
+        setSearch(''); setDateFrom(''); setDateTo('');
+        clearTimeout(debounceRef.current);
+        setLoading(true);
+        loadData('', '', '');
+    };
 
     const openCreateModal = () => {
         setIsEditing(false);
@@ -248,6 +292,71 @@ const NEXT_STATUS = {
                         <i className="fas fa-plus mr-1"></i>{t('production.btnNewOrder')}
                     </button>
                 )}
+            </div>
+
+            {/* Panel de búsqueda */}
+            <div className="card mb-3">
+                <div className="card-body py-2">
+                    <div className="row align-items-end g-2">
+                        {/* Campo texto */}
+                        <div className="col-md-4">
+                            <label className="mb-1" style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                <i className="fas fa-search mr-1"></i>{t('production.searchLabel', 'Order / Client')}
+                            </label>
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder={t('production.searchPlaceholder', 'OP-2026-00001 or client name...')}
+                                value={search}
+                                onChange={e => handleSearchChange(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleSearchBtn()}
+                            />
+                        </div>
+                        {/* Fecha desde */}
+                        <div className="col-md-2">
+                            <label className="mb-1" style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                <i className="fas fa-calendar mr-1"></i>{t('production.dateFrom', 'From')}
+                            </label>
+                            <input
+                                type="date"
+                                className="form-control form-control-sm"
+                                value={dateFrom}
+                                onChange={e => handleDateFromChange(e.target.value)}
+                            />
+                        </div>
+                        {/* Fecha hasta */}
+                        <div className="col-md-2">
+                            <label className="mb-1" style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                <i className="fas fa-calendar mr-1"></i>{t('production.dateTo', 'To')}
+                            </label>
+                            <input
+                                type="date"
+                                className="form-control form-control-sm"
+                                value={dateTo}
+                                onChange={e => handleDateToChange(e.target.value)}
+                            />
+                        </div>
+                        {/* Botones */}
+                        <div className="col-md-4 d-flex gap-2">
+                            <button
+                                className="btn btn-sm btn-danger"
+                                onClick={handleSearchBtn}
+                                style={{ minWidth: 90, fontWeight: 600 }}
+                            >
+                                <i className="fas fa-search mr-1"></i>{t('production.btnSearch', 'Search')}
+                            </button>
+                            {(search || dateFrom || dateTo) && (
+                                <button
+                                    className="btn btn-sm btn-outline-secondary"
+                                    onClick={handleClearSearch}
+                                    title={t('production.btnClear', 'Clear filters')}
+                                >
+                                    <i className="fas fa-times mr-1"></i>{t('production.btnClear', 'Clear')}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Filtros por etapa de pieza — iguales a My Station */}

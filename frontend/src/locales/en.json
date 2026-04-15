@@ -241,7 +241,13 @@
     "globalNotesPlaceholder": "Ex: Deliver urgent parts first.",
     "btnCancel": "Cancel",
     "btnSaveEdit": "Save Header Changes",
-    "btnEmitOrder": "Emit Order"
+    "btnEmitOrder": "Emit Order",
+    "searchLabel": "Order / Client",
+    "searchPlaceholder": "OP-2026-00001 or client name...",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "btnSearch": "Search",
+    "btnClear": "Clear"
   },
   "productionLines": {
     "loadError": "Error loading data",
