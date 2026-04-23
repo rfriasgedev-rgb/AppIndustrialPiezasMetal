@@ -596,7 +596,10 @@
     "notesPlaceholder": "Ex: Cut completed without incidents...",
     "cancelBtn": "Cancel",
     "saving": "Saving...",
-    "confirmAdvance": "Confirm Advance"
+    "confirmAdvance": "Confirm Advance",
+    "qtyToPass": "Quantity to pass",
+    "qtyFromPrev": "Quantity inherited from previous stage",
+    "qtyEditHint": "Adjust if any piece was rejected during cutting"
   },
   "modalClientSearch": {
     "title": "Search Client",

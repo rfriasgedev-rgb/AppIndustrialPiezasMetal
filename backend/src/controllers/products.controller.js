@@ -1,8 +1,6 @@
 const { pool } = require('../db/connection');
 const { v4: uuidv4 } = require('uuid');
 const { auditLog } = require('../services/audit.service');
-const fs = require('fs');
-const path = require('path');
 
 const getAll = async (req, res, next) => {
     try {
@@ -42,7 +40,7 @@ const create = async (req, res, next) => {
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();
-        const { name, part_number, description, requires_assembly, standard_hours, sale_price } = req.body;
+        const { name, part_number, description, requires_assembly, standard_hours, sale_price, image_data } = req.body;
         if (!name) {
             await conn.rollback();
             return res.status(400).json({ error: 'El nombre del producto es requerido.' });
@@ -52,12 +50,11 @@ const create = async (req, res, next) => {
         if (req.body.materials) {
             try {
                 materials = typeof req.body.materials === 'string' ? JSON.parse(req.body.materials) : req.body.materials;
-            } catch (e) {
-                // Ignore parse error, it might already be an array or empty
-            }
+            } catch (e) { /* ignore */ }
         }
 
-        const image_url = req.file ? `/uploads/products/${req.file.filename}` : null;
+        // image_data llega como string base64 (data:image/...;base64,...)
+        const image_url = image_data || null;
 
         const id = uuidv4();
         await conn.query(
@@ -77,7 +74,7 @@ const create = async (req, res, next) => {
         }
 
         await conn.commit();
-        auditLog(pool, { tableName: 'product_catalog', recordId: id, action: 'INSERT', newValues: { name, part_number, image_url }, userId: req.user.id, req });
+        auditLog(pool, { tableName: 'product_catalog', recordId: id, action: 'INSERT', newValues: { name, part_number }, userId: req.user.id, req });
         res.status(201).json({ id, message: 'Producto creado exitosamente.' });
     } catch (err) {
         await conn.rollback();
@@ -98,25 +95,19 @@ const update = async (req, res, next) => {
             return res.status(404).json({ error: 'Producto no encontrado.' });
         }
 
-        const { name, part_number, description, requires_assembly, standard_hours, sale_price, is_active } = req.body;
+        const { name, part_number, description, requires_assembly, standard_hours, sale_price, is_active, image_data } = req.body;
 
         let materials = [];
         if (req.body.materials) {
             try {
                 materials = typeof req.body.materials === 'string' ? JSON.parse(req.body.materials) : req.body.materials;
-            } catch (e) {
-                // Ignore parse error
-            }
+            } catch (e) { /* ignore */ }
         }
 
+        // Si viene image_data nueva la usamos; si viene null explícito borramos; si no viene, conservamos la anterior
         let image_url = old[0].image_url;
-        if (req.file) {
-            image_url = `/uploads/products/${req.file.filename}`;
-            // Delete old file if exists
-            if (old[0].image_url) {
-                const oldPath = path.join(__dirname, '../../', old[0].image_url);
-                if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-            }
+        if (req.body.hasOwnProperty('image_data')) {
+            image_url = image_data || null;
         }
 
         await conn.query(
@@ -136,9 +127,7 @@ const update = async (req, res, next) => {
 
         // Actualizar Lista de Materiales (BOM)
         if (req.body.materials !== undefined) {
-            // Borrar anteriores
             await conn.query('DELETE FROM product_materials WHERE product_id = ?', [id]);
-            // Insertar nuevos
             if (materials && materials.length > 0) {
                 for (const mat of materials) {
                     await conn.query(
@@ -150,7 +139,7 @@ const update = async (req, res, next) => {
         }
 
         await conn.commit();
-        auditLog(pool, { tableName: 'product_catalog', recordId: id, action: 'UPDATE', oldValues: old[0], newValues: { name, image_url }, userId: req.user.id, req });
+        auditLog(pool, { tableName: 'product_catalog', recordId: id, action: 'UPDATE', oldValues: { name: old[0].name }, newValues: { name }, userId: req.user.id, req });
         res.json({ message: 'Producto actualizado exitosamente.' });
     } catch (err) {
         await conn.rollback();
@@ -167,13 +156,7 @@ const remove = async (req, res, next) => {
 
         await conn.query('DELETE FROM product_catalog WHERE id = ?', [id]);
 
-        // Delete image file natively
-        if (old[0].image_url) {
-            const oldPath = path.join(__dirname, '../../', old[0].image_url);
-            if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-        }
-
-        auditLog(conn, { tableName: 'product_catalog', recordId: id, action: 'DELETE', oldValues: old[0], userId: req.user.id, req });
+        auditLog(conn, { tableName: 'product_catalog', recordId: id, action: 'DELETE', oldValues: { name: old[0].name }, userId: req.user.id, req });
         res.json({ message: 'Producto eliminado exitosamente.' });
     } catch (err) {
         if (err.code === 'ER_ROW_IS_REFERENCED_2') {

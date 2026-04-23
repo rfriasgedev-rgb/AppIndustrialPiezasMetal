@@ -20,14 +20,11 @@ export default function Products() {
     const [form, setForm] = useState({
         id: null, name: '', part_number: '', description: '',
         requires_assembly: false, standard_hours: 0, sale_price: 0,
-        is_active: true, image: null, image_url: '',
-        materials: [] // Array of { item_id, name, part_number, unit_measure, quantity_required }
+        is_active: true, image_data: null,
+        materials: []
     });
 
     const [imagePreview, setImagePreview] = useState(null);
-
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-    const BASE_URL = API_URL.replace('/api', '');
 
     const fetchProducts = () => {
         API.get('/products').then(r => { setProducts(r.data); setLoading(false); });
@@ -44,7 +41,7 @@ export default function Products() {
         setForm({
             id: null, name: '', part_number: '', description: '',
             requires_assembly: false, standard_hours: 0, sale_price: 0,
-            is_active: true, image: null, image_url: '',
+            is_active: true, image_data: null,
             materials: []
         });
         setImagePreview(null);
@@ -54,7 +51,6 @@ export default function Products() {
     const openEditModal = async (product) => {
         setIsEditing(true);
         try {
-            // Obtenemos el producto completo con sus materiales desde el backend
             const { data } = await API.get(`/products/${product.id}`);
             setForm({
                 id: data.id,
@@ -65,55 +61,63 @@ export default function Products() {
                 standard_hours: data.standard_hours || 0,
                 sale_price: parseFloat(data.sale_price) || 0,
                 is_active: data.is_active == 1 || data.is_active === true,
-                image: null,
-                image_url: data.image_url || '',
+                image_data: null, // no re-enviamos la imagen salvo que se cambie
                 materials: data.materials || []
             });
-            setImagePreview(data.image_url ? `${BASE_URL}${data.image_url}` : null);
+            // La imagen guardada es base64 directo — mostrarla como preview
+            setImagePreview(data.image_url || null);
             setShowModal(true);
         } catch (err) {
             toast.error(t('products.fetchError'));
         }
     };
 
+    // Convierte el archivo seleccionado a base64
     const handleImageChange = (e) => {
         const file = e.target.files[0];
-        if (file) {
-            setForm({ ...form, image: file });
-            setImagePreview(URL.createObjectURL(file));
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.warning(t('products.imageTooLarge') || 'La imagen no debe superar 5MB.');
+            return;
         }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64 = reader.result; // data:image/...;base64,...
+            setForm(prev => ({ ...prev, image_data: base64 }));
+            setImagePreview(base64);
+        };
+        reader.readAsDataURL(file);
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
         try {
-            const formData = new FormData();
-            formData.append('name', form.name);
-            formData.append('part_number', form.part_number);
-            formData.append('description', form.description);
-            formData.append('requires_assembly', form.requires_assembly);
-            formData.append('standard_hours', form.standard_hours);
-            formData.append('sale_price', form.sale_price);
+            const payload = {
+                name: form.name,
+                part_number: form.part_number,
+                description: form.description,
+                requires_assembly: form.requires_assembly,
+                standard_hours: form.standard_hours,
+                sale_price: form.sale_price,
+                materials: form.materials,
+            };
 
-            // Enviar listado de materiales como string JSON para procesar en multer
-            if (form.materials && form.materials.length > 0) {
-                formData.append('materials', JSON.stringify(form.materials));
-            } else {
-                formData.append('materials', JSON.stringify([]));
+            if (isEditing) {
+                payload.is_active = form.is_active;
+            }
+
+            // Solo enviamos image_data si el usuario seleccionó una nueva imagen
+            if (form.image_data) {
+                payload.image_data = form.image_data;
             }
 
             if (isEditing) {
-                formData.append('is_active', form.is_active);
-            }
-            if (form.image) {
-                formData.append('image', form.image);
-            }
-
-            if (isEditing) {
-                await API.put(`/products/${form.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                await API.put(`/products/${form.id}`, payload);
                 toast.success(t('products.updateSuccess'));
             } else {
-                await API.post('/products', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                await API.post('/products', payload);
                 toast.success(t('products.createSuccess'));
             }
             setShowModal(false);
@@ -149,7 +153,7 @@ export default function Products() {
                     name: item.name,
                     part_number: item.sku,
                     unit_measure: item.unit_of_measure,
-                    quantity_required: 1 // Por defecto
+                    quantity_required: 1
                 }
             ]
         }));
@@ -214,7 +218,11 @@ export default function Products() {
                                         <tr key={p.id}>
                                             <td>
                                                 {p.image_url ? (
-                                                    <img src={`${BASE_URL}${p.image_url}`} alt={p.name} style={{ width: '45px', height: '45px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ccc' }} />
+                                                    <img
+                                                        src={p.image_url}
+                                                        alt={p.name}
+                                                        style={{ width: '45px', height: '45px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ccc' }}
+                                                    />
                                                 ) : (
                                                     <div style={{ width: '45px', height: '45px', background: '#e9ecef', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#adb5bd' }}>
                                                         <i className="fas fa-image"></i>
@@ -262,7 +270,7 @@ export default function Products() {
                                 <h5 className="modal-title">{isEditing ? t('products.modalEditTitle') : t('products.modalNewTitle')}</h5>
                                 <button type="button" className="close text-white" onClick={() => setShowModal(false)}><span>&times;</span></button>
                             </div>
-                            <form onSubmit={handleSave} encType="multipart/form-data">
+                            <form onSubmit={handleSave}>
                                 <div className="modal-body">
                                     <div className="row">
                                         <div className="col-md-8">
@@ -379,7 +387,7 @@ export default function Products() {
                                                 <div className="custom-file text-left">
                                                     <input type="file" className="custom-file-input" id="customFile" accept="image/*" onChange={handleImageChange} />
                                                     <label className="custom-file-label" htmlFor="customFile" data-browse="Elegir" style={{ overflow: 'hidden' }}>
-                                                        {form.image ? form.image.name : t('products.fileSelect')}
+                                                        {form.image_data ? t('products.imageSelected') || 'Imagen seleccionada ✓' : t('products.fileSelect')}
                                                     </label>
                                                 </div>
                                                 <small className="form-text text-muted">{t('products.supportedFormats')}</small>

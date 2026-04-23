@@ -14,13 +14,17 @@ const NEXT_AVAILABLE_STAGES = {
 };
 
 // ── Modal de confirmación de avance de etapa ──────────────────────────────────
-function AdvanceModal({ item, nextStage, stageName, onConfirm, onCancel, t }) {
+function AdvanceModal({ item, nextStage, currentStage, stageName, defaultQty, onConfirm, onCancel, t }) {
     const [notes, setNotes] = useState('');
+    const [qty, setQty] = useState(defaultQty ?? item.quantity);
     const [loading, setLoading] = useState(false);
+
+    // Solo editable cuando la pieza SALE de CUTTING (cortador define cuántas pasan)
+    const qtyEditable = currentStage === 'CUTTING';
 
     const handleConfirm = async () => {
         setLoading(true);
-        await onConfirm(notes);
+        await onConfirm(notes, Number(qty));
         setLoading(false);
     };
 
@@ -49,6 +53,48 @@ function AdvanceModal({ item, nextStage, stageName, onConfirm, onCancel, t }) {
                         <i className="fas fa-box mr-1"></i> <strong>{item.product_name}</strong> — {t('workQueue.op')} {item.order_number}
                     </p>
                     <hr />
+
+                    {/* Campo: Cantidad a pasar */}
+                    <div className="form-group mb-3">
+                        <label className="font-weight-bold mb-1" style={{ fontSize: 14 }}>
+                            <i className="fas fa-layer-group mr-1 text-primary"></i>
+                            {t('workQueue.qtyToPass', 'Cantidad a pasar')}
+                            {qtyEditable && <span className="badge badge-warning ml-2" style={{ fontSize: 11 }}>Editable</span>}
+                        </label>
+                        <div className="input-group input-group-sm" style={{ maxWidth: 180 }}>
+                            <input
+                                type="number"
+                                className="form-control"
+                                min={1}
+                                max={item.quantity}
+                                value={qty}
+                                readOnly={!qtyEditable}
+                                onChange={e => qtyEditable && setQty(e.target.value)}
+                                style={{
+                                    background: qtyEditable ? '#fff' : '#f8f9fa',
+                                    fontWeight: 700,
+                                    color: qtyEditable ? '#0f172a' : '#6b7280',
+                                    cursor: qtyEditable ? 'text' : 'default',
+                                }}
+                            />
+                            <div className="input-group-append">
+                                <span className="input-group-text">{t('workQueue.units', 'pcs')}</span>
+                            </div>
+                        </div>
+                        {!qtyEditable && (
+                            <small className="text-muted">
+                                <i className="fas fa-lock mr-1"></i>
+                                {t('workQueue.qtyFromPrev', 'Cantidad heredada de la etapa anterior')}
+                            </small>
+                        )}
+                        {qtyEditable && (
+                            <small className="text-muted">
+                                <i className="fas fa-info-circle mr-1"></i>
+                                {t('workQueue.qtyEditHint', 'Ajusta si alguna pieza fue rechazada en corte')}
+                            </small>
+                        )}
+                    </div>
+
                     <label className="font-weight-bold mb-1" style={{ fontSize: 14 }}>
                         {t('workQueue.notesLabel', 'Notas de la etapa')} <span className="text-muted font-weight-normal">(opcional)</span>
                     </label>
@@ -128,7 +174,7 @@ export default function WorkQueue() {
         }
     };
 
-    // Abre el modal de confirmación (reemplaza window.prompt)
+    // Abre el modal de confirmación
     const handleAdvanceClick = (item, nextStage) => {
         if (nextStage === 'READY') {
             const lineId = selectedLines[item.id];
@@ -137,14 +183,16 @@ export default function WorkQueue() {
                 return;
             }
         }
-        setModal({ item, nextStage });
+        // defaultQty: usa last_quantity_passed del log anterior, o la cantidad de la orden si no hay log
+        const defaultQty = item.last_quantity_passed ?? item.quantity;
+        setModal({ item, nextStage, currentStage: selectedStage, defaultQty });
     };
 
     // Se llama cuando el usuario confirma en el modal
-    const handleAdvanceConfirm = async (notes) => {
+    const handleAdvanceConfirm = async (notes, quantity_passed) => {
         const { item, nextStage } = modal;
         try {
-            const payload = { to_status: nextStage, notes };
+            const payload = { to_status: nextStage, notes, quantity_passed };
             if (nextStage === 'READY') {
                 payload.production_line_id = selectedLines[item.id];
             }
@@ -178,6 +226,8 @@ export default function WorkQueue() {
                 <AdvanceModal
                     item={modal.item}
                     nextStage={modal.nextStage}
+                    currentStage={modal.currentStage}
+                    defaultQty={modal.defaultQty}
                     stageName={STAGES[modal.nextStage] || modal.nextStage}
                     onConfirm={handleAdvanceConfirm}
                     onCancel={() => setModal(null)}

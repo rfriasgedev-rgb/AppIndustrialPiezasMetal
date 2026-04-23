@@ -278,6 +278,8 @@ async function migrate() {
         // CRÍTICO: Columnas de snapshot de operador (pueden no existir en DB vieja)
         await run('production_stage_log.operator_name', `ALTER TABLE production_stage_log ADD COLUMN operator_name VARCHAR(150) NULL`);
         await run('production_stage_log.operator_role', `ALTER TABLE production_stage_log ADD COLUMN operator_role VARCHAR(100) NULL`);
+        // Cantidad de piezas transferida a la siguiente etapa
+        await run('production_stage_log.quantity_passed', `ALTER TABLE production_stage_log ADD COLUMN quantity_passed INT UNSIGNED NULL`);
 
         await run('tabla production_stage_log_team', `
             CREATE TABLE IF NOT EXISTS production_stage_log_team (
@@ -352,6 +354,14 @@ async function migrate() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB
         `);
+
+        // Ampliar image_url para soportar base64 (imágenes almacenadas en BD)
+        await run('product_catalog.image_url → MEDIUMTEXT', `
+            ALTER TABLE product_catalog MODIFY COLUMN image_url MEDIUMTEXT NULL
+        `);
+
+        // Compatibilidad: measurement_units.unit_of_measure_id
+        await run('inventory_items.unit_of_measure_id column', `ALTER TABLE inventory_items ADD COLUMN unit_of_measure_id INT UNSIGNED NULL`);
 
         log('✅ Sistema de base de datos estabilizado.');
         return true;

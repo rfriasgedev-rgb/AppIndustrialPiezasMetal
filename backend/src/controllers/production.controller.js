@@ -124,10 +124,10 @@ const create = async (req, res, next) => {
                 [detailId, id, item.product_id, item.quantity || 1, item.requires_assembly ? 1 : 0, item.notes || '', initialStage]
             );
 
-            // 3. Log de Etapa Inicial por Pieza
+            // 3. Log de Etapa Inicial por Pieza (con quantity_passed = cantidad de la orden)
             await conn.query(
-                `INSERT INTO production_stage_log (id, order_detail_id, from_status, to_status, notes, performed_by) VALUES (?,?,?,?,?,?)`,
-                [uuidv4(), detailId, null, initialStage, 'Pieza agregada a la orden', req.user.id]
+                `INSERT INTO production_stage_log (id, order_detail_id, from_status, to_status, notes, performed_by, quantity_passed) VALUES (?,?,?,?,?,?,?)`,
+                [uuidv4(), detailId, null, initialStage, 'Pieza agregada a la orden', req.user.id, item.quantity || 1]
             );
         }
 
@@ -144,7 +144,7 @@ const advanceStage = async (req, res, next) => {
         await conn.beginTransaction();
         // NOTA: 'id' aquí es el order_detail_id, NO la orden padre.
         const { id } = req.params;
-        const { to_status, notes, production_line_id } = req.body;
+        const { to_status, notes, production_line_id, quantity_passed } = req.body;
 
         const [userRows] = await conn.query(
             'SELECT u.full_name, r.name as role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.id = ?', 
@@ -188,11 +188,11 @@ const advanceStage = async (req, res, next) => {
             await conn.query('UPDATE production_order_details SET stage = ?, updated_at = NOW() WHERE id = ?', [to_status, id]);
         }
 
-        // Insertar nuevo Log con snapshot de operador
+        // Insertar nuevo Log con snapshot de operador y cantidad_pasada
         const logId = uuidv4();
         await conn.query(
-            `INSERT INTO production_stage_log (id, order_detail_id, from_status, to_status, notes, performed_by, operator_name, operator_role) VALUES (?,?,?,?,?,?,?,?)`,
-            [logId, id, detail.stage, to_status, notes, req.user.id, operatorName, operatorRole]
+            `INSERT INTO production_stage_log (id, order_detail_id, from_status, to_status, notes, performed_by, operator_name, operator_role, quantity_passed) VALUES (?,?,?,?,?,?,?,?,?)`,
+            [logId, id, detail.stage, to_status, notes, req.user.id, operatorName, operatorRole, quantity_passed || detail.quantity]
         );
 
         // Snapshot del equipo de la Línea de Producción si aplica
@@ -281,13 +281,14 @@ const remove = async (req, res, next) => {
     }
 };
 
-// GET /production/queue/:stage - Obtener ítems enológicos en una etapa específica
+// GET /production/queue/:stage - Obtener ítems en una etapa específica
 const getQueue = async (req, res, next) => {
     try {
         const { stage } = req.params;
         const [items] = await pool.query(
             `SELECT pod.*, po.order_number, po.priority, po.created_at as order_date, pc.name as product_name, c.company_name as client_name,
-             (SELECT psl.stage_started_at FROM production_stage_log psl WHERE psl.order_detail_id = pod.id AND psl.to_status = pod.stage ORDER BY psl.stage_started_at DESC LIMIT 1) as stage_entered_at
+             (SELECT psl.stage_started_at FROM production_stage_log psl WHERE psl.order_detail_id = pod.id AND psl.to_status = pod.stage ORDER BY psl.stage_started_at DESC LIMIT 1) as stage_entered_at,
+             (SELECT psl.quantity_passed FROM production_stage_log psl WHERE psl.order_detail_id = pod.id AND psl.to_status = pod.stage ORDER BY psl.stage_started_at DESC LIMIT 1) as last_quantity_passed
              FROM production_order_details pod
              JOIN production_orders po ON pod.order_id = po.id
              JOIN product_catalog pc ON pod.product_id = pc.id
