@@ -34,28 +34,34 @@ export default function OperatorStatsDashboard() {
         loadStats();
     }, []);
 
+    const STAGE_MAP = {
+        'DESIGN': 'Design',
+        'CUTTING': 'Cutting',
+        'BENDING': 'Bending',
+        'ASSEMBLY': 'Assembly',
+        'WELDING': 'Welding',
+        'CLEANING': 'Production Line'
+    };
+
     const loadStats = async () => {
         try {
             setLoading(true);
+            const data = await analyticsService.getOperatorStats();
             
-            // Fetch both stats and all available employee roles in parallel
-            const [statsRes, rolesRes] = await Promise.all([
-                analyticsService.getOperatorStats(),
-                API.get('/employee-roles').catch(() => ({ data: [] }))
-            ]);
+            // Map the backend role (which is now from_status like 'CUTTING') to the display name
+            const mappedStats = data.map(item => ({
+                ...item,
+                role: STAGE_MAP[item.role] || item.role
+            }));
             
-            const stats = statsRes;
-            setStatsData(stats);
+            setStatsData(mappedStats);
             
-            // Generate list of roles: first all HR roles, then any roles present in stats that might not be in HR roles (like 'Líder de Línea')
-            const hrRoles = rolesRes.data.map(r => r.name);
-            const statsRoles = [...new Set(stats.map(item => item.role))];
+            // Set predefined roles in exact order requested
+            const fixedRoles = ['Design', 'Cutting', 'Bending', 'Assembly', 'Welding', 'Production Line'];
+            setRoles(fixedRoles);
             
-            const combinedRoles = [...new Set([...hrRoles, ...statsRoles])].sort();
-            setRoles(combinedRoles);
-            
-            if (combinedRoles.length > 0) {
-                setActiveRole(combinedRoles[0]);
+            if (fixedRoles.length > 0) {
+                setActiveRole(fixedRoles[0]);
             }
         } catch (error) {
             console.error('Error loading operator stats:', error);
