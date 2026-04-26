@@ -597,7 +597,12 @@
     "notesPlaceholder": "Ej: Corte completado sin incidencias...",
     "cancelBtn": "Cancelar",
     "saving": "Guardando...",
-    "confirmAdvance": "Confirmar Avance"
+    "confirmAdvance": "Confirmar Avance",
+    "qtyToPass": "Cantidad a pasar",
+    "qtyFromPrev": "Cantidad heredada de la etapa anterior",
+    "qtyEditHint": "Ajusta si alguna pieza fue rechazada en corte",
+    "qtyRequested": "Cantidad solicitada en la orden",
+    "qtyRequestedShort": "sol."
   },
   "modalClientSearch": {
     "title": "Buscar Cliente",

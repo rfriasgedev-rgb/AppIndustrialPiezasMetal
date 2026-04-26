@@ -600,7 +600,9 @@
     "confirmAdvance": "Confirm Advance",
     "qtyToPass": "Quantity to pass",
     "qtyFromPrev": "Quantity inherited from previous stage",
-    "qtyEditHint": "Adjust if any piece was rejected during cutting"
+    "qtyEditHint": "Adjust if any piece was rejected during cutting",
+    "qtyRequested": "Quantity requested in the order",
+    "qtyRequestedShort": "req."
   },
   "modalClientSearch": {
     "title": "Search Client",

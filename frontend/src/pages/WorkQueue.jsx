@@ -61,26 +61,60 @@ function AdvanceModal({ item, nextStage, currentStage, stageName, defaultQty, on
                             {t('workQueue.qtyToPass', 'Cantidad a pasar')}
                             {qtyEditable && <span className="badge badge-warning ml-2" style={{ fontSize: 11 }}>Editable</span>}
                         </label>
-                        <div className="input-group input-group-sm" style={{ maxWidth: 180 }}>
-                            <input
-                                type="number"
-                                className="form-control"
-                                min={1}
-                                max={item.quantity}
-                                value={qty}
-                                readOnly={!qtyEditable}
-                                onChange={e => qtyEditable && setQty(e.target.value)}
-                                style={{
-                                    background: qtyEditable ? '#fff' : '#f8f9fa',
-                                    fontWeight: 700,
-                                    color: qtyEditable ? '#0f172a' : '#6b7280',
-                                    cursor: qtyEditable ? 'text' : 'default',
-                                }}
-                            />
-                            <div className="input-group-append">
-                                <span className="input-group-text">{t('workQueue.units', 'pcs')}</span>
+                        <div className="d-flex align-items-center gap-2" style={{ gap: '10px' }}>
+                            {/* Cantidad a pasar (editable o bloqueada según etapa) */}
+                            <div className="input-group input-group-sm" style={{ maxWidth: 160 }}>
+                                <input
+                                    type="number"
+                                    className="form-control"
+                                    min={1}
+                                    max={item.quantity}
+                                    value={qty}
+                                    readOnly={!qtyEditable}
+                                    onChange={e => qtyEditable && setQty(e.target.value)}
+                                    style={{
+                                        background: qtyEditable ? '#fff' : '#f8f9fa',
+                                        fontWeight: 700,
+                                        color: qtyEditable ? '#0f172a' : '#6b7280',
+                                        cursor: qtyEditable ? 'text' : 'default',
+                                    }}
+                                />
+                                <div className="input-group-append">
+                                    <span className="input-group-text">{t('workQueue.units', 'pcs')}</span>
+                                </div>
+                            </div>
+
+                            {/* Separador visual */}
+                            <span style={{ color: '#94a3b8', fontWeight: 400, fontSize: 13, whiteSpace: 'nowrap' }}>/ sol.:</span>
+
+                            {/* Cantidad solicitada (siempre solo lectura) */}
+                            <div className="input-group input-group-sm" style={{ maxWidth: 160 }}>
+                                <input
+                                    type="number"
+                                    className="form-control"
+                                    value={item.quantity}
+                                    readOnly
+                                    title={t('workQueue.qtyRequested', 'Cantidad solicitada en la orden')}
+                                    style={{
+                                        background: '#f1f5f9',
+                                        fontWeight: 600,
+                                        color: '#475569',
+                                        cursor: 'default',
+                                        borderStyle: 'dashed',
+                                    }}
+                                />
+                                <div className="input-group-append">
+                                    <span
+                                        className="input-group-text"
+                                        title={t('workQueue.qtyRequested', 'Cantidad solicitada')}
+                                        style={{ background: '#e2e8f0', color: '#64748b', fontSize: 11 }}
+                                    >
+                                        {t('workQueue.qtyRequestedShort', 'sol.')}
+                                    </span>
+                                </div>
                             </div>
                         </div>
+
                         {!qtyEditable && (
                             <small className="text-muted">
                                 <i className="fas fa-lock mr-1"></i>
@@ -94,6 +128,7 @@ function AdvanceModal({ item, nextStage, currentStage, stageName, defaultQty, on
                             </small>
                         )}
                     </div>
+
 
                     <label className="font-weight-bold mb-1" style={{ fontSize: 14 }}>
                         {t('workQueue.notesLabel', 'Notas de la etapa')} <span className="text-muted font-weight-normal">(opcional)</span>
