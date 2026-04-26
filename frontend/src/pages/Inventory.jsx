@@ -160,18 +160,25 @@ export default function Inventory() {
             {loading ? <div className="text-center pt-5"><i className="fas fa-spinner fa-spin fa-3x text-secondary"></i></div> : (
                 <div className="card" style={{ borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
                     <div className="card-body p-0">
-                        <div className="table-responsive">
-                            <table className="table table-hover mb-0">
-                                <thead style={{ background: '#1a1a2e', color: '#fff' }}>
+                        <div className="table-responsive" style={{ maxHeight: '600px', overflowY: 'auto' }}>
+                            <table className="table table-hover mb-0 sticky-header">
+                                <thead style={{ background: '#1a1a2e', color: '#fff', position: 'sticky', top: 0, zIndex: 10 }}>
                                     <tr>
-                                        <th>{t('inventory.colName')}</th><th>{t('inventory.colCategory')}</th><th>{t('inventory.colSKU')}</th><th>{t('inventory.colAvailable')}</th>
-                                        <th>{t('inventory.colReserved')}</th><th>{t('inventory.colMin')}</th><th>{t('inventory.colStatus')}</th><th>{t('inventory.colUnitCost')}</th>
+                                        <th>{t('inventory.colName')}</th>
+                                        <th>{t('inventory.colCategory')}</th>
+                                        <th>{t('inventory.colSKU')}</th>
+                                        <th className="text-center">{t('inventory.colAvailable')}</th>
+                                        <th className="text-center">{t('inventory.colUnit')}</th>
+                                        <th className="text-center">{t('inventory.colReserved')}</th>
+                                        <th className="text-center">{t('inventory.colMin')}</th>
+                                        <th>{t('inventory.colStatus')}</th>
+                                        <th>{t('inventory.colUnitCost')}</th>
                                         {hasRole('ADMIN', 'ALMACENISTA') && <th className="text-center">{t('inventory.colActions')}</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filtered.length === 0 ? (
-                                        <tr><td colSpan="8" className="text-center py-4 text-muted">{t('inventory.noRecords')}</td></tr>
+                                        <tr><td colSpan="10" className="text-center py-4 text-muted">{t('inventory.noRecords')}</td></tr>
                                     ) : filtered.map(item => {
                                         const isLow = parseFloat(item.quantity_available) <= parseFloat(item.reorder_point);
                                         return (
@@ -179,9 +186,10 @@ export default function Inventory() {
                                                 <td><strong>{item.name}</strong>{item.location && <><br /><small className="text-muted"><i className="fas fa-map-marker-alt mr-1"></i>{item.location}</small></>}</td>
                                                 <td><span className="badge badge-dark">{item.category_name}</span></td>
                                                 <td><code>{item.sku || '—'}</code></td>
-                                                <td><strong style={{ color: isLow ? '#dc3545' : '#28a745' }}>{parseFloat(item.quantity_available).toFixed(2)}</strong> {item.unit_of_measure}</td>
-                                                <td>{parseFloat(item.quantity_reserved || 0).toFixed(2)} {item.unit_of_measure}</td>
-                                                <td>{parseFloat(item.reorder_point || 0).toFixed(2)} {item.unit_of_measure}</td>
+                                                <td className="text-center"><strong style={{ color: isLow ? '#dc3545' : '#28a745' }}>{parseFloat(item.quantity_available).toFixed(2)}</strong></td>
+                                                <td className="text-center"><span className="badge badge-light border">{item.unit_of_measure}</span></td>
+                                                <td className="text-center">{parseFloat(item.quantity_reserved || 0).toFixed(2)}</td>
+                                                <td className="text-center">{parseFloat(item.reorder_point || 0).toFixed(2)}</td>
                                                 <td>
                                                     {item.is_active === 1 || item.is_active === true
                                                         ? <span className="badge badge-success"><i className="fas fa-check mr-1"></i>{t('inventory.active')}</span>

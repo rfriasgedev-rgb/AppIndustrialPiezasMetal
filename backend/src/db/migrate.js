@@ -199,11 +199,17 @@ async function migrate() {
                 requires_assembly BOOLEAN DEFAULT FALSE,
                 standard_hours DECIMAL(8,2),
                 sale_price DECIMAL(15,2) DEFAULT 0,
+                unit_of_measure_id CHAR(36) NULL,
                 image_url VARCHAR(255),
                 is_active BOOLEAN DEFAULT TRUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_prod_unit FOREIGN KEY (unit_of_measure_id) REFERENCES measurement_units(id) ON DELETE SET NULL
             ) ENGINE=InnoDB
         `);
+
+        // Patch: Asegurar columna unit_of_measure_id en product_catalog si ya existe la tabla
+        await run('product_catalog.unit_of_measure_id', `ALTER TABLE product_catalog ADD COLUMN unit_of_measure_id CHAR(36) NULL`);
+        await run('product_catalog fk_prod_unit', `ALTER TABLE product_catalog ADD CONSTRAINT fk_prod_unit FOREIGN KEY (unit_of_measure_id) REFERENCES measurement_units(id) ON DELETE SET NULL`);
 
         await run('tabla production_orders', `
             CREATE TABLE IF NOT EXISTS production_orders (

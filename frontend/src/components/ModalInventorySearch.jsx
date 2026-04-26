@@ -77,7 +77,7 @@ export default function ModalInventorySearch({ show, onClose, onSelect }) {
                         </div>
 
                         {/* Grid de Resultados */}
-                        <div className="p-0" style={{ maxHeight: '450px', overflowY: 'auto' }}>
+                        <div className="p-0" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
                             {loading ? (
                                 <div className="text-center p-4"><i className="fas fa-spinner fa-spin fa-2x text-muted"></i></div>
                             ) : items.length > 0 ? (

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { pool } = require('./src/db/connection');
 
 async function cleanData() {
@@ -15,7 +16,7 @@ async function cleanData() {
 
         for (const table of tables) {
             try {
-                await conn.query(`TRUNCATE TABLE ${table}`);
+                await conn.query(`DELETE FROM ${table}`);
                 console.log(`✓ ${table} cleaned`);
             } catch (err) {
                 if (err.code === 'ER_NO_SUCH_TABLE') {

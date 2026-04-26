@@ -5,8 +5,11 @@ const { auditLog } = require('../services/audit.service');
 const getAll = async (req, res, next) => {
     try {
         const [rows] = await pool.query(
-            `SELECT id, name, part_number, description, requires_assembly, standard_hours, sale_price, image_url, is_active, created_at
-       FROM product_catalog ORDER BY name LIMIT 1000`
+            `SELECT p.id, p.name, p.part_number, p.description, p.requires_assembly, p.standard_hours, p.sale_price, p.image_url, p.is_active, p.created_at,
+                    u.abbreviation as unit_measure
+             FROM product_catalog p
+             LEFT JOIN measurement_units u ON p.unit_of_measure_id = u.id
+             ORDER BY p.name LIMIT 1000`
         );
         res.json(rows);
     } catch (err) { next(err); }
@@ -40,7 +43,7 @@ const create = async (req, res, next) => {
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();
-        const { name, part_number, description, requires_assembly, standard_hours, sale_price, image_data } = req.body;
+        const { name, part_number, description, requires_assembly, standard_hours, sale_price, image_data, unit_of_measure_id } = req.body;
         if (!name) {
             await conn.rollback();
             return res.status(400).json({ error: 'El nombre del producto es requerido.' });
@@ -58,9 +61,9 @@ const create = async (req, res, next) => {
 
         const id = uuidv4();
         await conn.query(
-            `INSERT INTO product_catalog (id, name, part_number, description, requires_assembly, standard_hours, sale_price, image_url) 
-       VALUES (?,?,?,?,?,?,?,?)`,
-            [id, name, part_number, description, String(requires_assembly) === 'true' || String(requires_assembly) === '1' ? 1 : 0, standard_hours || 0, sale_price || 0, image_url]
+            `INSERT INTO product_catalog (id, name, part_number, description, requires_assembly, standard_hours, sale_price, image_url, unit_of_measure_id) 
+       VALUES (?,?,?,?,?,?,?,?,?)`,
+            [id, name, part_number, description, String(requires_assembly) === 'true' || String(requires_assembly) === '1' ? 1 : 0, standard_hours || 0, sale_price || 0, image_url, unit_of_measure_id || null]
         );
 
         // Insertar materiales BOM
@@ -95,7 +98,7 @@ const update = async (req, res, next) => {
             return res.status(404).json({ error: 'Producto no encontrado.' });
         }
 
-        const { name, part_number, description, requires_assembly, standard_hours, sale_price, is_active, image_data } = req.body;
+        const { name, part_number, description, requires_assembly, standard_hours, sale_price, is_active, image_data, unit_of_measure_id } = req.body;
 
         let materials = [];
         if (req.body.materials) {
@@ -111,7 +114,7 @@ const update = async (req, res, next) => {
         }
 
         await conn.query(
-            `UPDATE product_catalog SET name=?, part_number=?, description=?, requires_assembly=?, standard_hours=?, sale_price=?, image_url=?, is_active=? WHERE id=?`,
+            `UPDATE product_catalog SET name=?, part_number=?, description=?, requires_assembly=?, standard_hours=?, sale_price=?, image_url=?, is_active=?, unit_of_measure_id=? WHERE id=?`,
             [
                 name ?? old[0].name,
                 part_number ?? old[0].part_number,
@@ -121,6 +124,7 @@ const update = async (req, res, next) => {
                 sale_price ?? old[0].sale_price,
                 image_url,
                 is_active !== undefined ? (String(is_active) === 'true' || String(is_active) === '1' ? 1 : 0) : old[0].is_active,
+                unit_of_measure_id ?? old[0].unit_of_measure_id,
                 id
             ]
         );

@@ -8,6 +8,7 @@ import ModalInventorySearch from '../components/ModalInventorySearch';
 export default function Products() {
     const { t } = useTranslation();
     const [products, setProducts] = useState([]);
+    const [units, setUnits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const { hasRole } = useAuth();
@@ -20,6 +21,7 @@ export default function Products() {
     const [form, setForm] = useState({
         id: null, name: '', part_number: '', description: '',
         requires_assembly: false, standard_hours: 0, sale_price: 0,
+        unit_of_measure_id: '',
         is_active: true, image_data: null,
         materials: []
     });
@@ -29,7 +31,13 @@ export default function Products() {
     const fetchProducts = () => {
         API.get('/products').then(r => { setProducts(r.data); setLoading(false); });
     };
-    useEffect(() => { fetchProducts(); }, []);
+    const fetchUnits = () => {
+        API.get('/units').then(r => setUnits(r.data));
+    };
+    useEffect(() => { 
+        fetchProducts(); 
+        fetchUnits();
+    }, []);
 
     const filtered = products.filter(p =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -41,6 +49,7 @@ export default function Products() {
         setForm({
             id: null, name: '', part_number: '', description: '',
             requires_assembly: false, standard_hours: 0, sale_price: 0,
+            unit_of_measure_id: '',
             is_active: true, image_data: null,
             materials: []
         });
@@ -60,6 +69,7 @@ export default function Products() {
                 requires_assembly: data.requires_assembly == 1 || data.requires_assembly === true,
                 standard_hours: data.standard_hours || 0,
                 sale_price: parseFloat(data.sale_price) || 0,
+                unit_of_measure_id: data.unit_of_measure_id || '',
                 is_active: data.is_active == 1 || data.is_active === true,
                 image_data: null, // no re-enviamos la imagen salvo que se cambie
                 materials: data.materials || []
@@ -101,6 +111,7 @@ export default function Products() {
                 requires_assembly: form.requires_assembly,
                 standard_hours: form.standard_hours,
                 sale_price: form.sale_price,
+                unit_of_measure_id: form.unit_of_measure_id || null,
                 materials: form.materials,
             };
 
@@ -205,6 +216,7 @@ export default function Products() {
                                         <th style={{ width: '60px' }}>{t('products.colImage')}</th>
                                         <th>{t('products.colName')}</th>
                                         <th>{t('products.colPartNumber')}</th>
+                                        <th>{t('products.colUnit')}</th>
                                         <th>{t('products.colRequiresAssembly')}</th>
                                         <th>{t('products.colStandardHours')}</th>
                                         <th>{t('products.colStatus')}</th>
@@ -231,6 +243,7 @@ export default function Products() {
                                             </td>
                                             <td><strong>{p.name}</strong><br /><small className="text-muted">{p.description}</small></td>
                                             <td>{p.part_number || '—'}</td>
+                                            <td className="text-center"><span className="badge badge-light border">{p.unit_measure || '—'}</span></td>
                                             <td>
                                                 <span className={`badge badge-${p.requires_assembly ? 'info' : 'secondary'}`}>
                                                     {p.requires_assembly ? t('products.yes') : t('products.no')}
@@ -279,9 +292,18 @@ export default function Products() {
                                                     <label>{t('products.lblProductName')} <span className="text-danger">*</span></label>
                                                     <input className="form-control" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                                                 </div>
-                                                <div className="col-md-12 form-group">
+                                                <div className="col-md-6 form-group">
                                                     <label>{t('products.lblSKU')}</label>
                                                     <input className="form-control" value={form.part_number} onChange={e => setForm({ ...form, part_number: e.target.value })} />
+                                                </div>
+                                                <div className="col-md-6 form-group">
+                                                    <label>{t('products.lblUnit')} <span className="text-danger">*</span></label>
+                                                    <select className="form-control" required value={form.unit_of_measure_id} onChange={e => setForm({ ...form, unit_of_measure_id: e.target.value })}>
+                                                        <option value="">{t('products.selectUnit') || 'Seleccionar...'}</option>
+                                                        {units.map(u => (
+                                                            <option key={u.id} value={u.id}>{u.name} ({u.abbreviation})</option>
+                                                        ))}
+                                                    </select>
                                                 </div>
                                                 <div className="col-md-12 form-group">
                                                     <label>{t('products.lblDescription')}</label>
@@ -322,7 +344,7 @@ export default function Products() {
                                                         <i className="fas fa-plus mr-1"></i> {t('products.btnAddMaterial')}
                                                     </button>
                                                 </div>
-                                                <div className="card-body p-0">
+                                                <div className="card-body p-0" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                                                     {form.materials.length === 0 ? (
                                                         <div className="text-center p-4 text-muted border-bottom">
                                                             <i className="fas fa-box-open fa-2x mb-2 text-light"></i>
