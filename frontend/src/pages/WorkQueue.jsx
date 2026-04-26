@@ -310,7 +310,9 @@ export default function WorkQueue() {
                                     <div className="card-body">
                                         <div className="d-flex justify-content-between">
                                             <h5 className="font-weight-bold" style={{ color: '#0f172a' }}>{item.product_name}</h5>
-                                            <span className="badge badge-light border">{item.quantity} {t('workQueue.units')}</span>
+                                            <span className="badge badge-light border" title={t('workQueue.receivedQtyTitle', 'Unidades recibidas en esta etapa')}>
+                                                {item.last_quantity_passed ?? item.quantity} {t('workQueue.units')}
+                                            </span>
                                         </div>
                                         <p className="text-muted mb-2">
                                             <i className="fas fa-hashtag mr-1"></i>{t('workQueue.op')} {item.order_number}

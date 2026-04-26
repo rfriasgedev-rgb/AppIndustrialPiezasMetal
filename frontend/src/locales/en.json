@@ -602,7 +602,8 @@
     "qtyFromPrev": "Quantity inherited from previous stage",
     "qtyEditHint": "Adjust if any piece was rejected during cutting",
     "qtyRequested": "Quantity requested in the order",
-    "qtyRequestedShort": "req."
+    "qtyRequestedShort": "req.",
+    "receivedQtyTitle": "Units received in this stage"
   },
   "modalClientSearch": {
     "title": "Search Client",

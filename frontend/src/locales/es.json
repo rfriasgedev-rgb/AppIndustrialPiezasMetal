@@ -602,7 +602,8 @@
     "qtyFromPrev": "Cantidad heredada de la etapa anterior",
     "qtyEditHint": "Ajusta si alguna pieza fue rechazada en corte",
     "qtyRequested": "Cantidad solicitada en la orden",
-    "qtyRequestedShort": "sol."
+    "qtyRequestedShort": "sol.",
+    "receivedQtyTitle": "Unidades recibidas en esta etapa"
   },
   "modalClientSearch": {
     "title": "Buscar Cliente",
