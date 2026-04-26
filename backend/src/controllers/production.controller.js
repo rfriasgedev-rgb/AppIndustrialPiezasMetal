@@ -86,7 +86,23 @@ const getById = async (req, res, next) => {
              WHERE pod.order_id = ? ORDER BY sl.stage_started_at DESC`, [id]
         );
 
-        res.json({ ...order, items, all_logs: logs });
+        // Obtener los equipos (team) para los logs correspondientes (solo aplica cuando to_status = 'READY')
+        const logIds = logs.map(l => l.id);
+        let teams = [];
+        if (logIds.length > 0) {
+            const [teamRows] = await pool.query(
+                `SELECT * FROM production_stage_log_team WHERE production_stage_log_id IN (?)`, [logIds]
+            );
+            teams = teamRows;
+        }
+
+        // Anidar el team en los logs
+        const logsWithTeam = logs.map(log => ({
+            ...log,
+            team: teams.filter(t => t.production_stage_log_id === log.id)
+        }));
+
+        res.json({ ...order, items, all_logs: logsWithTeam });
     } catch (err) { next(err); }
 };
 
@@ -203,7 +219,12 @@ const advanceStage = async (req, res, next) => {
                 JOIN employees e ON ple.employee_id = e.id
                 LEFT JOIN employee_roles er ON e.employee_role_id = er.id
                 WHERE ple.line_id = ?
-            `, [production_line_id]);
+                UNION
+                SELECT e.first_name, e.last_name, 'Líder de Línea' as role_name
+                FROM production_lines pl
+                JOIN employees e ON pl.leader_employee_id = e.id
+                WHERE pl.id = ?
+            `, [production_line_id, production_line_id]);
 
             if (lineEmployees.length > 0) {
                 const teamValues = lineEmployees.map(emp => [

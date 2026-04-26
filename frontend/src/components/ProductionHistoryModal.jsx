@@ -293,6 +293,31 @@ export default function ProductionHistoryModal({ orderId, orderNumber, onClose }
                                                             {log.notes}
                                                         </div>
                                                     )}
+
+                                                    {/* Equipo de Línea (si aplica) */}
+                                                    {log.team && log.team.length > 0 && (
+                                                        <div style={{
+                                                            marginTop: 10, padding: '10px 12px',
+                                                            background: '#f0fdf4', borderRadius: 8,
+                                                            border: '1px solid #bbf7d0',
+                                                        }}>
+                                                            <div style={{ fontSize: 12, fontWeight: 700, color: '#166534', marginBottom: 6 }}>
+                                                                <i className="fas fa-users mr-1"></i> Equipo de la Línea
+                                                            </div>
+                                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                                                {log.team.map(member => (
+                                                                    <div key={member.id} style={{
+                                                                        background: '#fff', border: '1px solid #dcfce7',
+                                                                        padding: '4px 8px', borderRadius: 6, fontSize: 11,
+                                                                        color: '#15803d', display: 'flex', flexDirection: 'column',
+                                                                    }}>
+                                                                        <span style={{ fontWeight: 600 }}>{member.employee_name}</span>
+                                                                        <span style={{ fontSize: 10, color: '#166534', opacity: 0.8 }}>{member.employee_role}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
