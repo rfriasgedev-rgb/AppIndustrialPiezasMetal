@@ -280,6 +280,8 @@ async function migrate() {
         await run('production_stage_log.operator_role', `ALTER TABLE production_stage_log ADD COLUMN operator_role VARCHAR(100) NULL`);
         // Cantidad de piezas transferida a la siguiente etapa
         await run('production_stage_log.quantity_passed', `ALTER TABLE production_stage_log ADD COLUMN quantity_passed INT UNSIGNED NULL`);
+        // Cantidad original solicitada en la orden (para historial en cada etapa)
+        await run('production_stage_log.quantity_requested', `ALTER TABLE production_stage_log ADD COLUMN quantity_requested INT UNSIGNED NULL`);
 
         await run('tabla production_stage_log_team', `
             CREATE TABLE IF NOT EXISTS production_stage_log_team (

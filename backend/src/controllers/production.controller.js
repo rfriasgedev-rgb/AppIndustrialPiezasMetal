@@ -126,8 +126,8 @@ const create = async (req, res, next) => {
 
             // 3. Log de Etapa Inicial por Pieza (con quantity_passed = cantidad de la orden)
             await conn.query(
-                `INSERT INTO production_stage_log (id, order_detail_id, from_status, to_status, notes, performed_by, quantity_passed) VALUES (?,?,?,?,?,?,?)`,
-                [uuidv4(), detailId, null, initialStage, 'Pieza agregada a la orden', req.user.id, item.quantity || 1]
+                `INSERT INTO production_stage_log (id, order_detail_id, from_status, to_status, notes, performed_by, quantity_passed, quantity_requested) VALUES (?,?,?,?,?,?,?,?)`,
+                [uuidv4(), detailId, null, initialStage, 'Pieza agregada a la orden', req.user.id, item.quantity || 1, item.quantity || 1]
             );
         }
 
@@ -191,8 +191,8 @@ const advanceStage = async (req, res, next) => {
         // Insertar nuevo Log con snapshot de operador y cantidad_pasada
         const logId = uuidv4();
         await conn.query(
-            `INSERT INTO production_stage_log (id, order_detail_id, from_status, to_status, notes, performed_by, operator_name, operator_role, quantity_passed) VALUES (?,?,?,?,?,?,?,?,?)`,
-            [logId, id, detail.stage, to_status, notes, req.user.id, operatorName, operatorRole, quantity_passed || detail.quantity]
+            `INSERT INTO production_stage_log (id, order_detail_id, from_status, to_status, notes, performed_by, operator_name, operator_role, quantity_passed, quantity_requested) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+            [logId, id, detail.stage, to_status, notes, req.user.id, operatorName, operatorRole, quantity_passed || detail.quantity, detail.quantity]
         );
 
         // Snapshot del equipo de la Línea de Producción si aplica
