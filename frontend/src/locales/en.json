@@ -603,7 +603,9 @@
     "qtyEditHint": "Adjust if any piece was rejected during cutting",
     "qtyRequested": "Quantity requested in the order",
     "qtyRequestedShort": "req.",
-    "receivedQtyTitle": "Units received in this stage"
+    "receivedQtyTitle": "Units received in this stage",
+    "lblRequested": "Requested:",
+    "lblReceived": "Received:"
   },
   "modalClientSearch": {
     "title": "Search Client",

@@ -310,9 +310,20 @@ export default function WorkQueue() {
                                     <div className="card-body">
                                         <div className="d-flex justify-content-between">
                                             <h5 className="font-weight-bold" style={{ color: '#0f172a' }}>{item.product_name}</h5>
-                                            <span className="badge badge-light border" title={t('workQueue.receivedQtyTitle', 'Unidades recibidas en esta etapa')}>
-                                                {item.last_quantity_passed ?? item.quantity} {t('workQueue.units')}
-                                            </span>
+                                            <div className="text-right">
+                                                <div className="mb-1">
+                                                    <span className="badge badge-light border" title={t('workQueue.qtyRequested', 'Cantidad solicitada en la orden')}>
+                                                        <span className="text-muted mr-1">{t('workQueue.lblRequested', 'Solicitada:')}</span>
+                                                        {item.quantity} {t('workQueue.units')}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="badge badge-info border" title={t('workQueue.receivedQtyTitle', 'Unidades recibidas en esta etapa')}>
+                                                        <span className="text-white mr-1">{t('workQueue.lblReceived', 'Recibida:')}</span>
+                                                        {item.last_quantity_passed ?? item.quantity} {t('workQueue.units')}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                         <p className="text-muted mb-2">
                                             <i className="fas fa-hashtag mr-1"></i>{t('workQueue.op')} {item.order_number}

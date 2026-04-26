@@ -603,7 +603,9 @@
     "qtyEditHint": "Ajusta si alguna pieza fue rechazada en corte",
     "qtyRequested": "Cantidad solicitada en la orden",
     "qtyRequestedShort": "sol.",
-    "receivedQtyTitle": "Unidades recibidas en esta etapa"
+    "receivedQtyTitle": "Unidades recibidas en esta etapa",
+    "lblRequested": "Solicitada:",
+    "lblReceived": "Recibida:"
   },
   "modalClientSearch": {
     "title": "Buscar Cliente",
