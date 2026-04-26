@@ -10,6 +10,7 @@
     "clients": "Clients",
     "users": "Users",
     "configurations": "Configurations",
+    "operatorStats": "Operator Stats",
     "categories": "Categories",
     "measurementUnits": "Measurement Units",
     "departments": "Departments",
@@ -693,6 +694,21 @@
     "singletonNote": "Only one company record exists in the system. Edit the fields and save to update.",
     "btnSave": "Save Changes",
     "btnSaving": "Saving..."
+  },
+  "operatorStats": {
+    "pageTitle": "Statistics Dashboard",
+    "pageSubtitle": "Performance and statistics of operators by role",
+    "loadError": "Error loading statistics.",
+    "emptyTitle": "No Data Available",
+    "emptySubtitle": "Not enough production records to generate statistics yet.",
+    "chartTitle": "Production Comparison",
+    "colName": "Name",
+    "colRole": "Role Description",
+    "colOrders": "Orders Worked On",
+    "colProduced": "Units Produced",
+    "colDamaged": "Damaged Units",
+    "lblProduced": "Produced",
+    "lblDamaged": "Damaged / Missing"
   }
 }
 

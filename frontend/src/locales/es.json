@@ -10,6 +10,7 @@
     "clients": "Clientes",
     "users": "Usuarios",
     "configurations": "Configuraciones",
+    "operatorStats": "Dashboard Estadística",
     "categories": "Categorías",
     "measurementUnits": "Unidades de Medida",
     "departments": "Departamentos",
@@ -693,6 +694,21 @@
     "singletonNote": "Solo existe un registro de empresa en el sistema. Modifique los campos y guarde para actualizar.",
     "btnSave": "Guardar Cambios",
     "btnSaving": "Guardando..."
+  },
+  "operatorStats": {
+    "pageTitle": "Dashboard Estadística",
+    "pageSubtitle": "Rendimiento y estadísticas de operadores por rol",
+    "loadError": "Error al cargar las estadísticas.",
+    "emptyTitle": "Sin Datos Disponibles",
+    "emptySubtitle": "Aún no hay registros de producción suficientes para generar estadísticas.",
+    "chartTitle": "Comparativa de Producción",
+    "colName": "Nombre",
+    "colRole": "Descripción de Rol",
+    "colOrders": "Órdenes Trabajadas",
+    "colProduced": "Unidades Producidas",
+    "colDamaged": "Unidades Dañadas",
+    "lblProduced": "Producidas",
+    "lblDamaged": "Dañadas / Faltantes"
   }
 }
 

@@ -23,6 +23,7 @@ const employeeRolesRoutes = require('./routes/employee_roles.routes');
 const employeesRoutes = require('./routes/employees.routes');
 const productionLinesRoutes = require('./routes/production_lines.routes');
 const companyRoutes = require('./routes/company.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
 const debugController = require('./controllers/debug.controller');
 const { errorHandler } = require('./middlewares/error.middleware');
 const path = require('path');
@@ -97,6 +98,7 @@ app.use('/api/employee-roles', employeeRolesRoutes);
 app.use('/api/employees', employeesRoutes);
 app.use('/api/production-lines', productionLinesRoutes);
 app.use('/api/company', companyRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Serve frontend static files
 const fs = require('fs');

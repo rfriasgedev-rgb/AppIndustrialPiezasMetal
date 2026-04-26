@@ -19,8 +19,8 @@ import Departments from './pages/Departments';
 import Schedules from './pages/Schedules';
 import EmployeeRoles from './pages/EmployeeRoles';
 import Employees from './pages/Employees';
-import ProductionLines from './pages/ProductionLines';
 import Company from './pages/Company';
+import OperatorStatsDashboard from './pages/OperatorStatsDashboard';
 export default function App() {
   return (
     <AuthProvider>
@@ -29,6 +29,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<PrivateRoute><AppLayout><Dashboard /></AppLayout></PrivateRoute>} />
+          <Route path="/operator-stats" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR']}><AppLayout><OperatorStatsDashboard /></AppLayout></PrivateRoute>} />
           <Route path="/work-queue" element={<PrivateRoute><AppLayout><WorkQueue /></AppLayout></PrivateRoute>} />
           <Route path="/planning" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR', 'VENTAS']}><AppLayout><Planning /></AppLayout></PrivateRoute>} />
           <Route path="/production" element={<PrivateRoute><AppLayout><Production /></AppLayout></PrivateRoute>} />
