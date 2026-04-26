@@ -1,4 +1,4 @@
-import API from './client';
+import API from '../api/client';
 
 export const analyticsService = {
     getOperatorStats: async () => {

@@ -19,6 +19,7 @@ import Departments from './pages/Departments';
 import Schedules from './pages/Schedules';
 import EmployeeRoles from './pages/EmployeeRoles';
 import Employees from './pages/Employees';
+import ProductionLines from './pages/ProductionLines';
 import Company from './pages/Company';
 import OperatorStatsDashboard from './pages/OperatorStatsDashboard';
 export default function App() {
