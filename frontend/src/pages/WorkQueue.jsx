@@ -35,7 +35,7 @@ function AdvanceModal({ item, nextStage, currentStage, stageName, defaultQty, on
                 background: 'rgba(0,0,0,0.55)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
-            onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+            onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}
         >
             <div className="card shadow-lg" style={{ width: '100%', maxWidth: 480, borderRadius: 12 }}>
                 <div className="card-header d-flex justify-content-between align-items-center"
