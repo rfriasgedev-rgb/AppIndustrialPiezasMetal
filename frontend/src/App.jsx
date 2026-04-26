@@ -20,6 +20,7 @@ import Schedules from './pages/Schedules';
 import EmployeeRoles from './pages/EmployeeRoles';
 import Employees from './pages/Employees';
 import ProductionLines from './pages/ProductionLines';
+import Company from './pages/Company';
 export default function App() {
   return (
     <AuthProvider>
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/employee-roles" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR']}><AppLayout><EmployeeRoles /></AppLayout></PrivateRoute>} />
           <Route path="/employees" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR']}><AppLayout><Employees /></AppLayout></PrivateRoute>} />
           <Route path="/production-lines" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR']}><AppLayout><ProductionLines /></AppLayout></PrivateRoute>} />
+          <Route path="/company" element={<PrivateRoute roles={['ADMIN']}><AppLayout><Company /></AppLayout></PrivateRoute>} />
           <Route path="/purchases" element={<PrivateRoute roles={['ADMIN', 'ALMACENISTA', 'SUPERVISOR']}><AppLayout><Purchases /></AppLayout></PrivateRoute>} />
           <Route path="/users" element={<PrivateRoute roles={['ADMIN']}><AppLayout><Users /></AppLayout></PrivateRoute>} />
           <Route path="/unauthorized" element={

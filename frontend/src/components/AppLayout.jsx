@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+import { companyService } from '../services/company.service';
 
 const navItems = [
     { path: '/', icon: 'fas fa-tachometer-alt', labelKey: 'dashboard', roles: null },
@@ -23,9 +24,25 @@ export default function AppLayout({ children }) {
     const navigate = useNavigate();
     
     const [configMenuOpen, setConfigMenuOpen] = useState(false);
+    const [companyName, setCompanyName] = useState('');
+
+    // Carga el nombre de la empresa para mostrarlo en el header
+    const loadCompanyName = async () => {
+        try {
+            const data = await companyService.getCompany();
+            if (data?.name) setCompanyName(data.name);
+        } catch (_) { /* silencioso si no hay registro */ }
+    };
 
     useEffect(() => {
-        const configRoutes = ['/categories', '/units', '/departments', '/schedules', '/employee-roles', '/employees', '/production-lines'];
+        loadCompanyName();
+        // Escuchar evento de actualización desde Company.jsx
+        window.addEventListener('company-updated', loadCompanyName);
+        return () => window.removeEventListener('company-updated', loadCompanyName);
+    }, []);
+
+    useEffect(() => {
+        const configRoutes = ['/categories', '/units', '/departments', '/schedules', '/employee-roles', '/employees', '/production-lines', '/company'];
         if (configRoutes.some(path => location.pathname.startsWith(path))) {
             setConfigMenuOpen(true);
         }
@@ -52,6 +69,12 @@ export default function AppLayout({ children }) {
                     <li className="nav-item d-none d-sm-inline-block">
                         <span className="nav-link" style={{ color: '#4f46e5', fontWeight: 700 }}>
                             <i className="fas fa-cubes mr-1"></i>MetalERP
+                            {companyName && (
+                                <>
+                                    <span style={{ color: '#94a3b8', fontWeight: 400, margin: '0 6px' }}>—</span>
+                                    <span style={{ color: '#0f172a', fontWeight: 600 }}>{companyName}</span>
+                                </>
+                            )}
                         </span>
                     </li>
                 </ul>
@@ -162,6 +185,12 @@ export default function AppLayout({ children }) {
                                             <Link to="/production-lines" className={`nav-link ${location.pathname === '/production-lines' ? 'active' : ''}`} style={location.pathname === '/production-lines' ? { color: '#4f46e5', fontWeight: 600 } : { color: '#64748b' }}>
                                                 <i className="fas fa-circle nav-icon" style={{ fontSize: '0.5rem', marginTop: '4px' }}></i>
                                                 <p>{t('appLayout.productionLines')}</p>
+                                            </Link>
+                                        </li>
+                                        <li className="nav-item">
+                                            <Link to="/company" className={`nav-link ${location.pathname === '/company' ? 'active' : ''}`} style={location.pathname === '/company' ? { color: '#4f46e5', fontWeight: 600 } : { color: '#64748b' }}>
+                                                <i className="fas fa-circle nav-icon" style={{ fontSize: '0.5rem', marginTop: '4px' }}></i>
+                                                <p>{t('appLayout.company')}</p>
                                             </Link>
                                         </li>
                                     </ul>

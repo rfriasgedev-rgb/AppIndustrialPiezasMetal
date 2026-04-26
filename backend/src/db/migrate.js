@@ -363,7 +363,23 @@ async function migrate() {
         // Compatibilidad: measurement_units.unit_of_measure_id
         await run('inventory_items.unit_of_measure_id column', `ALTER TABLE inventory_items ADD COLUMN unit_of_measure_id INT UNSIGNED NULL`);
 
-        log('✅ Sistema de base de datos estabilizado.');
+        // ── 5. TABLA COMPANY (singleton) ───────────────────────────────────────
+        await run('tabla company', `
+            CREATE TABLE IF NOT EXISTS company (
+                id         VARCHAR(36)   NOT NULL DEFAULT 'COMPANY_SINGLETON',
+                name       VARCHAR(255)  NOT NULL,
+                phone      VARCHAR(50)   NULL,
+                email      VARCHAR(255)  NULL,
+                created_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                created_by VARCHAR(36)   NULL,
+                updated_by VARCHAR(36)   NULL,
+                PRIMARY KEY (id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        `);
+
+        log('\u2705 Sistema de base de datos estabilizado.');
+
         return true;
     } catch (error) {
         if (global.migrationResults) {

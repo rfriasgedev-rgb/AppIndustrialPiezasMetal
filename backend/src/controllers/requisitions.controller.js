@@ -108,8 +108,17 @@ const generateRequisitionPDF = async (req, res, next) => {
             WHERE r.id = ?
         `, [id]);
 
-        if (!reqHeader.length) return res.status(404).json({ error: 'Requisición no encontrada' });
+        if (!reqHeader.length) return res.status(404).json({ error: 'Requisión no encontrada' });
         const data = reqHeader[0];
+
+        // Fetch nombre de la empresa (singleton)
+        let companyName = '';
+        try {
+            const [companyRows] = await pool.query(
+                "SELECT name FROM company WHERE id = 'COMPANY_SINGLETON' LIMIT 1"
+            );
+            if (companyRows.length) companyName = companyRows[0].name;
+        } catch (_) { /* silencioso */ }
 
         // Fetch de los productos que se fabrican en esta OP para añadir al Header
         const [productsToProduce] = await pool.query(`
@@ -143,8 +152,19 @@ const generateRequisitionPDF = async (req, res, next) => {
         doc.pipe(res);
 
         // Header
-        doc.fontSize(20).text('Requisición de Materiales - Almacén', { align: 'center' });
-        doc.moveDown();
+        doc.fontSize(20).text('Requisi\u00f3n de Materiales - Almac\u00e9n', { align: 'center' });
+        doc.moveDown(0.5);
+
+        // Nombre de la empresa (si está configurado)
+        if (companyName) {
+            doc.fontSize(13).font('Helvetica-Bold').fillColor('#4f46e5').text(companyName, { align: 'center' });
+            doc.fillColor('black').font('Helvetica');
+            doc.moveDown(0.5);
+        }
+
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor('#e2e8f0').stroke();
+        doc.strokeColor('black');
+        doc.moveDown(0.5);
 
         doc.fontSize(10).text(`No. Requisición: ${data.requisition_number}`, { continued: true });
         doc.text(`   |   Fecha: ${new Date(data.created_at).toLocaleString()}`);

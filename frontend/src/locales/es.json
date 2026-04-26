@@ -17,6 +17,7 @@
     "employeeRoles": "Roles de Personal",
     "employees": "Plantilla Empleados",
     "productionLines": "Líneas de Producción",
+    "company": "Compañía",
     "logout": "Cerrar Sesión",
     "loggedOut": "Sesión cerrada."
   },
@@ -664,6 +665,26 @@
       "READY": "Lista",
       "CANCELLED": "Cancelado"
     }
+  },
+  "company": {
+    "loadError": "Error al cargar los datos de la empresa.",
+    "saveSuccess": "Datos de la empresa guardados exitosamente.",
+    "saveError": "Error al guardar los datos de la empresa.",
+    "pageTitle": "Compañía",
+    "pageSubtitle": "Información general de la empresa que usa el sistema.",
+    "cardTitle": "Datos de la Empresa",
+    "cardSubtitle": "Registro único — estos datos aparecen en reportes y encabezados.",
+    "loading": "Cargando datos...",
+    "lblName": "Nombre de la Empresa",
+    "namePlaceholder": "Ej. Aceros del Norte S.A.",
+    "nameHelp": "Este nombre aparecerá en el encabezado del sistema y en los reportes de requisición.",
+    "lblPhone": "Teléfono",
+    "phonePlaceholder": "+1 (555) 000-0000",
+    "lblEmail": "Correo Electrónico",
+    "emailPlaceholder": "info@empresa.com",
+    "singletonNote": "Solo existe un registro de empresa en el sistema. Modifique los campos y guarde para actualizar.",
+    "btnSave": "Guardar Cambios",
+    "btnSaving": "Guardando..."
   }
 }
 

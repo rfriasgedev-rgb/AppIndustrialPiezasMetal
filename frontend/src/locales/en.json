@@ -17,6 +17,7 @@
     "employeeRoles": "Employee Roles",
     "employees": "Employees",
     "productionLines": "Production Lines",
+    "company": "Company",
     "logout": "Logout",
     "loggedOut": "Logged out."
   },
@@ -667,6 +668,26 @@
       "READY": "Ready",
       "CANCELLED": "Cancelled"
     }
+  },
+  "company": {
+    "loadError": "Error loading company data.",
+    "saveSuccess": "Company data saved successfully.",
+    "saveError": "Error saving company data.",
+    "pageTitle": "Company",
+    "pageSubtitle": "General information about the company using the system.",
+    "cardTitle": "Company Data",
+    "cardSubtitle": "Single record — this data appears in reports and system headers.",
+    "loading": "Loading data...",
+    "lblName": "Company Name",
+    "namePlaceholder": "Ex. Northern Steels Inc.",
+    "nameHelp": "This name will appear in the system header and in requisition reports.",
+    "lblPhone": "Phone",
+    "phonePlaceholder": "+1 (555) 000-0000",
+    "lblEmail": "Email",
+    "emailPlaceholder": "info@company.com",
+    "singletonNote": "Only one company record exists in the system. Edit the fields and save to update.",
+    "btnSave": "Save Changes",
+    "btnSaving": "Saving..."
   }
 }
 
