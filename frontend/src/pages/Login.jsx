@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function Login() {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [pw, setPw] = useState('');
     const [loading, setLoading] = useState(false);
     const [isWakingUp, setIsWakingUp] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
@@ -36,7 +36,7 @@ export default function Login() {
 
         while (attempts < maxAttempts) {
             try {
-                await login(email, password);
+                await login(email, pw);
                 attemptSucceeded = true;
                 clearTimeout(slowResponseTimeout);
 
@@ -123,7 +123,7 @@ export default function Login() {
                                 <div className="input-group">
                                     <input
                                         type="password" className="form-control bg-light" placeholder={t('login.password_placeholder')}
-                                        value={password} onChange={e => setPassword(e.target.value)} required
+                                        value={pw} onChange={e => setPw(e.target.value)} required
                                         style={{ border: 'none', borderRadius: '8px 0 0 8px', padding: '12px' }}
                                     />
                                     <div className="input-group-append">

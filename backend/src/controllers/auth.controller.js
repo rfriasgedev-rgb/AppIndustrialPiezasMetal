@@ -5,16 +5,16 @@ const { auditLog } = require('../services/audit.service');
 
 const login = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
-        if (!email || !password) return res.status(400).json({ error: 'Email y contraseña son requeridos.' });
+        const { email, pw } = req.body;
+        if (!email || !pw) return res.status(400).json({ error: 'Email y contraseña son requeridos.' });
 
         const [rows] = await pool.query(
-            'SELECT u.*, r.name as role FROM users u JOIN roles r ON u.role_id = r.id WHERE u.email = ? AND u.is_active = 1',
+            'SELECT u.*, r.name as role FROM users u JOIN employee_roles r ON u.role_id = r.id WHERE u.email = ? AND u.is_active = 1',
             [email]
         );
         if (!rows.length) return res.status(401).json({ error: 'Credenciales inválidas.' });
         const user = rows[0];
-        const isMatch = await bcrypt.compare(password, user.password_hash);
+        const isMatch = await bcrypt.compare(pw, user.password_hash);
         if (!isMatch) return res.status(401).json({ error: 'Credenciales inválidas.' });
 
         // Update last login

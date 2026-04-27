@@ -9,7 +9,7 @@ const { validateRequest } = require('../middlewares/validation.middleware');
 router.post('/login', [
     loginLimiter,
     body('email').isEmail().withMessage('Debe ser un correo electrónico válido.').normalizeEmail(),
-    body('password').notEmpty().withMessage('La contraseña no puede estar vacía.'),
+    body('pw').notEmpty().withMessage('La contraseña no puede estar vacía.'),
     validateRequest
 ], login);
 router.post('/logout', logout);

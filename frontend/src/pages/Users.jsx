@@ -3,36 +3,48 @@ import API from '../api/client';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 
-const ROLES = [
-    { id: 1, name: 'ADMIN' }, { id: 2, name: 'SUPERVISOR' }, { id: 3, name: 'OPERADOR' },
-    { id: 4, name: 'ALMACENISTA' }, { id: 5, name: 'VENTAS' },
-];
-
 export default function Users() {
     const { t } = useTranslation();
+    const [rolesList, setRolesList] = useState([]);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [form, setForm] = useState({ id: null, full_name: '', email: '', password: '', role_id: 3, is_active: true });
+    const [form, setForm] = useState({ id: null, full_name: '', email: '', pw: '', role_id: '', is_active: true });
+
+    const fetchData = async () => {
+        try {
+            const [usersRes, rolesRes] = await Promise.all([
+                API.get('/users'),
+                API.get('/employee-roles')
+            ]);
+            setUsers(usersRes.data);
+            setRolesList(rolesRes.data);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            toast.error(t('users.saveError'));
+        } finally {
+            setLoading(false);
+        }
+    };
+    useEffect(() => { fetchData(); }, []);
 
     const fetchUsers = () => {
-        API.get('/users').then(r => { setUsers(r.data); setLoading(false); });
+        API.get('/users').then(r => setUsers(r.data));
     };
-    useEffect(() => { fetchUsers(); }, []);
 
     const openCreateModal = () => {
         setIsEditing(false);
-        setForm({ id: null, full_name: '', email: '', password: '', role_id: 3, is_active: true });
+        setForm({ id: null, full_name: '', email: '', pw: '', role_id: rolesList[0]?.id || '', is_active: true });
         setShowModal(true);
     };
 
     const openEditModal = (user) => {
         setIsEditing(true);
         // Find role_id based on role string from backend
-        const roleMatch = ROLES.find(r => r.name === user.role);
-        const roleId = roleMatch ? roleMatch.id : 3;
-        setForm({ id: user.id, full_name: user.full_name, email: user.email, password: '', role_id: roleId, is_active: user.is_active });
+        const roleMatch = rolesList.find(r => r.name === user.role);
+        const roleId = roleMatch ? roleMatch.id : (rolesList[0]?.id || '');
+        setForm({ id: user.id, full_name: user.full_name, email: user.email, pw: '', role_id: roleId, is_active: user.is_active });
         setShowModal(true);
     };
 
@@ -41,7 +53,7 @@ export default function Users() {
         try {
             if (isEditing) {
                 const updateData = { full_name: form.full_name, role_id: form.role_id, is_active: form.is_active };
-                // En la API el password no se actualiza desde aquí (normalmente), así que enviamos solo lo permitido
+                if (form.pw) updateData.pw = form.pw;
                 await API.put(`/users/${form.id}`, updateData);
                 toast.success(t('users.updateSuccess'));
             } else {
@@ -129,16 +141,14 @@ export default function Users() {
                                         <label>{t('users.lblEmail')}</label>
                                         <input type="email" className="form-control" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} disabled={isEditing} />
                                     </div>
-                                    {!isEditing && (
-                                        <div className="form-group">
-                                            <label>{t('users.lblPassword')}</label>
-                                            <input type="password" className="form-control" required minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
-                                        </div>
-                                    )}
+                                    <div className="form-group">
+                                        <label>{t('users.lblPassword')}</label>
+                                        <input type="password" className="form-control" required={!isEditing} minLength={8} value={form.pw} onChange={e => setForm({ ...form, pw: e.target.value })} placeholder={isEditing ? "Dejar en blanco para no cambiar" : ""} />
+                                    </div>
                                     <div className="form-group">
                                         <label>{t('users.lblRole')}</label>
                                         <select className="form-control" value={form.role_id} onChange={e => setForm({ ...form, role_id: parseInt(e.target.value) })}>
-                                            {ROLES.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                            {rolesList.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                                         </select>
                                     </div>
                                     {isEditing && (

@@ -8,8 +8,8 @@ export const AuthProvider = ({ children }) => {
         try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
     });
 
-    const login = useCallback(async (email, password) => {
-        const { data } = await API.post('/auth/login', { email, password });
+    const login = useCallback(async (email, pw) => {
+        const { data } = await API.post('/auth/login', { email, pw });
         localStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
         return data.user;
