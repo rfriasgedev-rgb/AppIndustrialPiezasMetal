@@ -8,7 +8,7 @@ const getAll = async (req, res, next) => {
         const [rows] = await pool.query(
             `SELECT u.id, u.full_name, u.email, u.is_active, u.last_login, u.created_at, r.name as role, u.department_id, u.shift_id, d.name as department_name, s.name as shift_name
              FROM users u 
-             JOIN employee_roles r ON u.role_id = r.id 
+             JOIN roles r ON u.role_id = r.id 
              LEFT JOIN departments d ON u.department_id = d.id
              LEFT JOIN shifts s ON u.shift_id = s.id
              ORDER BY u.full_name LIMIT 1000`
@@ -45,36 +45,39 @@ const update = async (req, res, next) => {
         const [old] = await conn.query('SELECT * FROM users WHERE id = ?', [id]);
         if (!old.length) return res.status(404).json({ error: 'Usuario no encontrado.' });
 
-        if (pw) {
-            const password_hash = await bcrypt.hash(pw, 10);
-            await conn.query(
-                'UPDATE users SET full_name = ?, role_id = ?, is_active = ?, department_id = ?, shift_id = ?, password_hash = ? WHERE id = ?',
-                [
-                    full_name ?? old[0].full_name, 
-                    role_id ?? old[0].role_id, 
-                    is_active ?? old[0].is_active, 
-                    department_id !== undefined ? department_id : old[0].department_id,
-                    shift_id !== undefined ? shift_id : old[0].shift_id,
-                    password_hash,
-                    id
-                ]
-            );
-        } else {
-            await conn.query(
-                'UPDATE users SET full_name = ?, role_id = ?, is_active = ?, department_id = ?, shift_id = ? WHERE id = ?',
-                [
-                    full_name ?? old[0].full_name, 
-                    role_id ?? old[0].role_id, 
-                    is_active ?? old[0].is_active, 
-                    department_id !== undefined ? department_id : old[0].department_id,
-                    shift_id !== undefined ? shift_id : old[0].shift_id,
-                    id
-                ]
-            );
+        const f_full_name = full_name !== undefined ? full_name : old[0].full_name;
+        const parsed_role = parseInt(role_id);
+        const f_role_id = !isNaN(parsed_role) ? parsed_role : old[0].role_id;
+        const f_is_active = is_active !== undefined ? is_active : old[0].is_active;
+        const f_department_id = department_id !== undefined ? department_id : (old[0].department_id || null);
+        const f_shift_id = shift_id !== undefined ? shift_id : (old[0].shift_id || null);
+
+        let query = 'UPDATE users SET full_name = ?, role_id = ?, is_active = ?, department_id = ?, shift_id = ?';
+        let params = [f_full_name, f_role_id, f_is_active, f_department_id, f_shift_id];
+
+        if (pw && pw.trim() !== '') {
+            query += ', password_hash = ?';
+            params.push(await bcrypt.hash(pw, 10));
         }
+
+        query += ' WHERE id = ?';
+        params.push(id);
+
+        try {
+            await conn.query(query, params);
+        } catch (updateErr) {
+            if (updateErr.code === 'ER_NO_REFERENCED_ROW_2' || updateErr.errno === 1452) {
+                return res.status(400).json({ error: 'El rol seleccionado no es válido.' });
+            }
+            throw updateErr;
+        }
+
         auditLog(conn, { tableName: 'users', recordId: id, action: 'UPDATE', oldValues: old[0], newValues: req.body, userId: req.user.id, req });
         res.json({ message: 'Usuario actualizado.' });
-    } catch (err) { next(err); } finally { conn.release(); }
+    } catch (err) {
+        console.error("User update error:", err);
+        res.status(500).json({ error: err.message || 'Error interno del servidor.' });
+    } finally { conn.release(); }
 };
 
 const remove = async (req, res, next) => {

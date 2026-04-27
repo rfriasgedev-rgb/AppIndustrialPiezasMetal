@@ -9,7 +9,7 @@ const login = async (req, res, next) => {
         if (!email || !pw) return res.status(400).json({ error: 'Email y contraseña son requeridos.' });
 
         const [rows] = await pool.query(
-            'SELECT u.*, r.name as role FROM users u JOIN employee_roles r ON u.role_id = r.id WHERE u.email = ? AND u.is_active = 1',
+            'SELECT u.*, r.name as role FROM users u JOIN roles r ON u.role_id = r.id WHERE u.email = ? AND u.is_active = 1',
             [email]
         );
         if (!rows.length) return res.status(401).json({ error: 'Credenciales inválidas.' });
