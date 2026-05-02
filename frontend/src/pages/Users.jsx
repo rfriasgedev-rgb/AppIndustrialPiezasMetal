@@ -10,7 +10,7 @@ export default function Users() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [form, setForm] = useState({ id: null, full_name: '', email: '', pw: '', role_id: '', is_active: true });
+    const [form, setForm] = useState({ id: null, full_name: '', email: '', pw: '', employee_role_id: '', is_active: true });
 
     useEffect(() => {
         fetchUsers();
@@ -31,15 +31,15 @@ export default function Users() {
     const openCreateModal = () => {
         setIsEditing(false);
         const defaultRole = rolesList.find(r => r.name === 'OPERADOR') || rolesList[0];
-        setForm({ id: null, full_name: '', email: '', pw: '', role_id: defaultRole?.id || '', is_active: true });
+        setForm({ id: null, full_name: '', email: '', pw: '', employee_role_id: defaultRole?.id || '', is_active: true });
         setShowModal(true);
     };
 
     const openEditModal = (user) => {
         setIsEditing(true);
         const roleMatch = rolesList.find(r => r.name === user.role);
-        const roleId = roleMatch ? roleMatch.id : (rolesList[0]?.id || '');
-        setForm({ id: user.id, full_name: user.full_name, email: user.email, pw: '', role_id: roleId, is_active: user.is_active });
+        const empRoleId = roleMatch ? roleMatch.id : (rolesList[0]?.id || '');
+        setForm({ id: user.id, full_name: user.full_name, email: user.email, pw: '', employee_role_id: empRoleId, is_active: user.is_active });
         setShowModal(true);
     };
 
@@ -47,12 +47,12 @@ export default function Users() {
         e.preventDefault();
         try {
             if (isEditing) {
-                const updateData = { full_name: form.full_name, role_id: form.role_id, is_active: form.is_active };
+                const updateData = { full_name: form.full_name, employee_role_id: form.employee_role_id, is_active: form.is_active };
                 if (form.pw) updateData.pw = form.pw;
                 await API.put(`/users/${form.id}`, updateData);
                 toast.success(t('users.updateSuccess'));
             } else {
-                await API.post('/users', form);
+                await API.post('/users', { ...form, employee_role_id: form.employee_role_id });
                 toast.success(t('users.createSuccess'));
             }
             setShowModal(false);
@@ -142,7 +142,9 @@ export default function Users() {
                                     </div>
                                     <div className="form-group">
                                         <label>{t('users.lblRole')}</label>
-                                        <select className="form-control" value={form.role_id} onChange={e => setForm({ ...form, role_id: parseInt(e.target.value) })}>
+                                        <select className="form-control" value={form.employee_role_id}
+                                            onChange={e => setForm({ ...form, employee_role_id: e.target.value })}>
+                                            <option value="">-- Seleccionar rol --</option>
                                             {rolesList.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                                         </select>
                                     </div>

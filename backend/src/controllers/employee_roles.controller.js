@@ -26,6 +26,13 @@ exports.create = async (req, res) => {
         const { name, description } = req.body;
         const id = uuidv4();
         await pool.query('INSERT INTO employee_roles (id, name, description) VALUES (?, ?, ?)', [id, name, description]);
+
+        // Sincronizar a tabla `roles` para que aparezca en el dropdown de Usuarios
+        await pool.query(
+            'INSERT IGNORE INTO roles (name, description) VALUES (?, ?)',
+            [name, description || '']
+        );
+
         res.status(201).json({ id, name, description });
     } catch (error) {
         console.error('Error creating employee role:', error);
@@ -48,8 +55,17 @@ exports.update = async (req, res) => {
 
 exports.delete = async (req, res) => {
     try {
+        // Obtener nombre antes de eliminar (para sincronizar roles)
+        const [[er]] = await pool.query('SELECT name FROM employee_roles WHERE id = ?', [req.params.id]);
+
         const [result] = await pool.query('DELETE FROM employee_roles WHERE id = ?', [req.params.id]);
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Role not found' });
+
+        // Sincronizar eliminación en tabla `roles` (respetando roles del sistema id <= 5)
+        if (er) {
+            await pool.query('DELETE FROM roles WHERE name = ? AND id > 5', [er.name]);
+        }
+
         res.json({ message: 'Deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: 'Server error (may be in use)' });
