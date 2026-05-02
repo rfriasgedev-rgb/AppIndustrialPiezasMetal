@@ -17,6 +17,13 @@ const getAll = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+const getRoles = async (req, res, next) => {
+    try {
+        const [rows] = await pool.query('SELECT id, name, description FROM roles ORDER BY id');
+        res.json(rows);
+    } catch (err) { next(err); }
+};
+
 const create = async (req, res, next) => {
     try {
         const { full_name, email, pw, role_id, department_id, shift_id } = req.body;
@@ -100,4 +107,4 @@ const remove = async (req, res, next) => {
     }
 };
 
-module.exports = { getAll, create, update, remove };
+module.exports = { getAll, getRoles, create, update, remove };

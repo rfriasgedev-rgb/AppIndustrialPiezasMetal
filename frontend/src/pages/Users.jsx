@@ -3,35 +3,42 @@ import API from '../api/client';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 
-const ROLES = [
-    { id: 1, name: 'ADMIN' }, { id: 2, name: 'SUPERVISOR' }, { id: 3, name: 'OPERADOR' },
-    { id: 4, name: 'ALMACENISTA' }, { id: 5, name: 'VENTAS' },
-];
-
 export default function Users() {
     const { t } = useTranslation();
     const [users, setUsers] = useState([]);
+    const [rolesList, setRolesList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [form, setForm] = useState({ id: null, full_name: '', email: '', pw: '', role_id: '', is_active: true });
 
-    useEffect(() => { fetchUsers(); }, []);
+    useEffect(() => {
+        fetchUsers();
+        fetchRoles();
+    }, []);
 
     const fetchUsers = () => {
         API.get('/users').then(r => { setUsers(r.data); setLoading(false); });
     };
 
+    const fetchRoles = async () => {
+        try {
+            const r = await API.get('/users/roles');
+            setRolesList(r.data);
+        } catch { /* silencioso */ }
+    };
+
     const openCreateModal = () => {
         setIsEditing(false);
-        setForm({ id: null, full_name: '', email: '', pw: '', role_id: 3, is_active: true });
+        const defaultRole = rolesList.find(r => r.name === 'OPERADOR') || rolesList[0];
+        setForm({ id: null, full_name: '', email: '', pw: '', role_id: defaultRole?.id || '', is_active: true });
         setShowModal(true);
     };
 
     const openEditModal = (user) => {
         setIsEditing(true);
-        const roleMatch = ROLES.find(r => r.name === user.role);
-        const roleId = roleMatch ? roleMatch.id : 3;
+        const roleMatch = rolesList.find(r => r.name === user.role);
+        const roleId = roleMatch ? roleMatch.id : (rolesList[0]?.id || '');
         setForm({ id: user.id, full_name: user.full_name, email: user.email, pw: '', role_id: roleId, is_active: user.is_active });
         setShowModal(true);
     };
@@ -136,7 +143,7 @@ export default function Users() {
                                     <div className="form-group">
                                         <label>{t('users.lblRole')}</label>
                                         <select className="form-control" value={form.role_id} onChange={e => setForm({ ...form, role_id: parseInt(e.target.value) })}>
-                                            {ROLES.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                            {rolesList.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                                         </select>
                                     </div>
                                     {isEditing && (

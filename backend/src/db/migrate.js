@@ -59,9 +59,15 @@ async function migrate() {
             INSERT IGNORE INTO roles (id, name, description) VALUES
                 (1, 'ADMIN',       'Acceso total al sistema.'),
                 (2, 'SUPERVISOR',  'Supervisa órdenes de producción.'),
-                (3, 'OPERADOR',    'Ejecuta etapas de producción.'),
+                (3, 'OPERADOR',    'Ejecuta etapas de producción (genérico).'),
                 (4, 'ALMACENISTA', 'Gestiona inventario.'),
-                (5, 'VENTAS',      'Gestiona clientes y órdenes.')
+                (5, 'VENTAS',      'Gestiona clientes y órdenes.'),
+                (6, 'DESIGN',      'Operador de Diseño.'),
+                (7, 'CUTTING',     'Operador de Corte.'),
+                (8, 'BENDING',     'Operador de Doblado.'),
+                (9, 'ASSEMBLY',    'Operador de Ensamblaje.'),
+                (10,'WELDING',     'Operador de Soldadura.'),
+                (11,'CLEANING',    'Operador de Línea de Producción.')
         `);
 
         // ── 2. TABLAS RRHH (UUID) ──────────────────────────────────────────────
