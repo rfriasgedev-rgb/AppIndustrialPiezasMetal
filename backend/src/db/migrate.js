@@ -371,7 +371,15 @@ async function migrate() {
         // Compatibilidad: measurement_units.unit_of_measure_id
         await run('inventory_items.unit_of_measure_id column', `ALTER TABLE inventory_items ADD COLUMN unit_of_measure_id INT UNSIGNED NULL`);
 
-        // ── 5. TABLA COMPANY (singleton) ───────────────────────────────────────
+        // ── 5. MY ORDERS: columnas de asignación en production_order_details ──
+        await run('production_order_details.assigned_to column', `
+            ALTER TABLE production_order_details ADD COLUMN assigned_to VARCHAR(36) NULL DEFAULT NULL
+        `);
+        await run('production_order_details.assigned_at column', `
+            ALTER TABLE production_order_details ADD COLUMN assigned_at DATETIME NULL DEFAULT NULL
+        `);
+
+        // ── 6. TABLA COMPANY (singleton) ───────────────────────────────────────
         await run('tabla company', `
             CREATE TABLE IF NOT EXISTS company (
                 id         VARCHAR(36)   NOT NULL DEFAULT 'COMPANY_SINGLETON',
