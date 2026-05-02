@@ -46,7 +46,7 @@ export default function Users() {
         e.preventDefault();
         try {
             if (isEditing) {
-                const updateData = { full_name: form.full_name, role_name: form.role_name, is_active: form.is_active };
+                const updateData = { full_name: form.full_name, email: form.email, role_name: form.role_name, is_active: form.is_active };
                 if (form.pw) updateData.pw = form.pw;
                 await API.put(`/users/${form.id}`, updateData);
                 toast.success(t('users.updateSuccess'));
@@ -133,7 +133,7 @@ export default function Users() {
                                     </div>
                                     <div className="form-group">
                                         <label>{t('users.lblEmail')}</label>
-                                        <input type="email" className="form-control" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} disabled={isEditing} />
+                                        <input type="email" className="form-control" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
                                     </div>
                                     <div className="form-group">
                                         <label>{t('users.lblPassword')}</label>

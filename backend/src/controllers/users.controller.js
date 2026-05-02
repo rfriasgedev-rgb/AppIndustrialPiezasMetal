@@ -63,7 +63,7 @@ const update = async (req, res, next) => {
     const conn = await pool.getConnection();
     try {
         const { id } = req.params;
-        const { full_name, role_name, is_active, department_id, shift_id, pw } = req.body;
+        const { full_name, email, role_name, is_active, department_id, shift_id, pw } = req.body;
         const [old] = await conn.query('SELECT * FROM users WHERE id = ?', [id]);
         if (!old.length) return res.status(404).json({ error: 'Usuario no encontrado.' });
 
@@ -72,14 +72,22 @@ const update = async (req, res, next) => {
         const f_department_id = department_id !== undefined ? department_id : (old[0].department_id || null);
         const f_shift_id      = shift_id     !== undefined ? shift_id     : (old[0].shift_id || null);
 
+        // Validar email si cambió
+        let f_email = old[0].email;
+        if (email && email !== old[0].email) {
+            const [dup] = await conn.query('SELECT id FROM users WHERE email = ? AND id != ?', [email, id]);
+            if (dup.length) return res.status(409).json({ error: 'El email ya está en uso por otro usuario.' });
+            f_email = email;
+        }
+
         // Resolver nuevo rol si viene en el body
         let f_role_id = old[0].role_id;
         if (role_name) {
             f_role_id = await resolveRoleId(conn, role_name);
         }
 
-        let query = 'UPDATE users SET full_name = ?, role_id = ?, is_active = ?, department_id = ?, shift_id = ?';
-        let params = [f_full_name, f_role_id, f_is_active, f_department_id, f_shift_id];
+        let query = 'UPDATE users SET full_name = ?, email = ?, role_id = ?, is_active = ?, department_id = ?, shift_id = ?';
+        let params = [f_full_name, f_email, f_role_id, f_is_active, f_department_id, f_shift_id];
 
         if (pw && pw.trim() !== '') {
             query += ', password_hash = ?';
