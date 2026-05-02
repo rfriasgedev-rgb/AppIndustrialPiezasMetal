@@ -400,6 +400,22 @@ async function migrate() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         `);
 
+        // ── CRITICAL: Reparar usuarios con role_id inv\u00e1lido ──────────────────────
+        // Restaurar rol ADMIN al usuario admin@metalerp.com
+        await run('restore admin@metalerp.com role', `
+            UPDATE users u
+            JOIN roles r ON r.name = 'ADMIN'
+            SET u.role_id = r.id
+            WHERE u.email = 'admin@metalerp.com'
+        `);
+        // Cualquier usuario con role_id que no exista en roles → restaurar a OPERADOR
+        await run('fix orphaned user roles', `
+            UPDATE users u
+            LEFT JOIN roles r ON u.role_id = r.id
+            SET u.role_id = 3
+            WHERE r.id IS NULL
+        `);
+
         log('\u2705 Sistema de base de datos estabilizado.');
 
         return true;
