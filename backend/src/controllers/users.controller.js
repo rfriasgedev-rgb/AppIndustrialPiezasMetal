@@ -17,22 +17,11 @@ const getAll = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
-// Retorna roles del sistema (fijos) + employee_roles (dinámicos), sin duplicados
+// Retorna únicamente los roles de producción desde employee_roles
 const getRoles = async (req, res, next) => {
     try {
-        const [systemRoles] = await pool.query(
-            'SELECT name, description, \'system\' as type FROM roles WHERE id <= 5 ORDER BY id'
-        );
-        const [empRoles] = await pool.query(
-            'SELECT name, description, \'production\' as type FROM employee_roles ORDER BY name'
-        );
-        // Combinar: los de employee_roles que no existan ya en sistema
-        const sysNames = new Set(systemRoles.map(r => r.name));
-        const merged = [
-            ...systemRoles,
-            ...empRoles.filter(r => !sysNames.has(r.name))
-        ];
-        res.json(merged);
+        const [rows] = await pool.query('SELECT id, name, description FROM employee_roles ORDER BY name');
+        res.json(rows);
     } catch (err) { next(err); }
 };
 

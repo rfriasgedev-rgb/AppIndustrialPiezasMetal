@@ -144,16 +144,9 @@ export default function Users() {
                                         <select className="form-control" value={form.role_name}
                                             onChange={e => setForm({ ...form, role_name: e.target.value })}>
                                             <option value="">-- Seleccionar rol --</option>
-                                            <optgroup label="── Sistema ──">
-                                                {rolesList.filter(r => r.type === 'system').map(r =>
-                                                    <option key={r.name} value={r.name}>{r.name}</option>
-                                                )}
-                                            </optgroup>
-                                            <optgroup label="── Producción ──">
-                                                {rolesList.filter(r => r.type === 'production').map(r =>
-                                                    <option key={r.name} value={r.name}>{r.name}</option>
-                                                )}
-                                            </optgroup>
+                                            {rolesList.map(r => (
+                                                <option key={r.id} value={r.name}>{r.name}</option>
+                                            ))}
                                         </select>
                                     </div>
                                     {isEditing && (
