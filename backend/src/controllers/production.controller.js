@@ -14,6 +14,17 @@ const TRANSITIONS = {
     CANCELLED: [],
 };
 
+// Mapeo rol del sistema → etapa que puede reclamar
+// El nombre del rol en la tabla `roles` es igual al nombre de la etapa
+const ROLE_STAGE_MAP = {
+    DESIGN:    'DESIGN',
+    CUTTING:   'CUTTING',
+    BENDING:   'BENDING',
+    ASSEMBLY:  'ASSEMBLY',
+    WELDING:   'WELDING',
+    CLEANING:  'CLEANING',
+};
+
 // GET /production - Listar órdenes (Nivel Cabecera con Avance Global)
 const getAll = async (req, res, next) => {
     try {
@@ -322,4 +333,148 @@ const getQueue = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
-module.exports = { getAll, getById, create, advanceStage, update, remove, getQueue };
+// GET /production/my-orders/available - Órdenes disponibles para el rol del usuario
+const getAvailableOrders = async (req, res, next) => {
+    try {
+        const userRole = req.user.role;
+        const stage = ROLE_STAGE_MAP[userRole];
+
+        if (!stage) {
+            return res.json({ stage: null, items: [] });
+        }
+
+        // Filtro de fechas (por defecto mes actual)
+        const now = new Date();
+        const defaultFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+        const defaultTo   = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+        const dateFrom = req.query.date_from || defaultFrom;
+        const dateTo   = req.query.date_to   || defaultTo;
+
+        const [items] = await pool.query(
+            `SELECT pod.id, pod.stage, pod.quantity, pod.notes, pod.requires_assembly,
+                    po.order_number, po.priority, po.created_at as order_date, po.estimated_delivery,
+                    pc.name as product_name, pc.part_number,
+                    c.company_name as client_name,
+                    (SELECT psl.quantity_passed FROM production_stage_log psl
+                     WHERE psl.order_detail_id = pod.id AND psl.to_status = pod.stage
+                     ORDER BY psl.stage_started_at DESC LIMIT 1) as last_quantity_passed
+             FROM production_order_details pod
+             JOIN production_orders po ON pod.order_id = po.id
+             JOIN product_catalog pc ON pod.product_id = pc.id
+             JOIN clients c ON po.client_id = c.id
+             WHERE pod.stage = ?
+               AND pod.assigned_to IS NULL
+               AND po.status NOT IN ('CANCELLED', 'DELIVERED')
+               AND DATE(po.created_at) >= ?
+               AND DATE(po.created_at) <= ?
+             ORDER BY FIELD(po.priority,'URGENT','HIGH','NORMAL','LOW'), po.created_at ASC`,
+            [stage, dateFrom, dateTo]
+        );
+
+        res.json({ stage, items });
+    } catch (err) { next(err); }
+};
+
+// POST /production/my-orders/claim/:detailId - Reclamar una orden (anti race-condition)
+const claimOrder = async (req, res, next) => {
+    const conn = await pool.getConnection();
+    try {
+        await conn.beginTransaction();
+        const { detailId } = req.params;
+        const userId = req.user.id;
+
+        // Bloquear el registro para evitar que dos operadores tomen el mismo ítem
+        const [[detail]] = await conn.query(
+            'SELECT id, assigned_to, stage, order_id FROM production_order_details WHERE id = ? FOR UPDATE',
+            [detailId]
+        );
+
+        if (!detail) {
+            await conn.rollback();
+            return res.status(404).json({ error: 'Ítem de orden no encontrado.' });
+        }
+
+        if (detail.assigned_to !== null) {
+            await conn.rollback();
+            return res.status(409).json({ error: 'Esta orden ya fue tomada por otro operador.' });
+        }
+
+        await conn.query(
+            'UPDATE production_order_details SET assigned_to = ?, assigned_at = NOW() WHERE id = ?',
+            [userId, detailId]
+        );
+
+        // Devolver la info completa del ítem para abrir el modal
+        const [[fullDetail]] = await conn.query(
+            `SELECT pod.id, pod.stage, pod.quantity, pod.notes, pod.requires_assembly,
+                    po.order_number, po.priority, po.id as order_id,
+                    pc.name as product_name, pc.part_number,
+                    c.company_name as client_name,
+                    (SELECT psl.quantity_passed FROM production_stage_log psl
+                     WHERE psl.order_detail_id = pod.id AND psl.to_status = pod.stage
+                     ORDER BY psl.stage_started_at DESC LIMIT 1) as last_quantity_passed
+             FROM production_order_details pod
+             JOIN production_orders po ON pod.order_id = po.id
+             JOIN product_catalog pc ON pod.product_id = pc.id
+             JOIN clients c ON po.client_id = c.id
+             WHERE pod.id = ?`,
+            [detailId]
+        );
+
+        await conn.commit();
+        res.json({ message: 'Orden reclamada exitosamente.', item: fullDetail });
+    } catch (err) { await conn.rollback(); next(err); } finally { conn.release(); }
+};
+
+// GET /production/my-orders/history - Historial de órdenes trabajadas por el usuario
+const getMyOrdersHistory = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const userRole = req.user.role;
+        const stage = ROLE_STAGE_MAP[userRole];
+
+        // Filtros
+        const now = new Date();
+        const defaultFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+        const defaultTo   = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+        const dateFrom = req.query.date_from || defaultFrom;
+        const dateTo   = req.query.date_to   || defaultTo;
+        const statusFilter = req.query.status || 'ALL'; // ALL | PENDING | COMPLETED
+
+        let stageCondition = '';
+        if (statusFilter === 'PENDING' && stage) {
+            // Aún en la misma etapa del rol (asignado pero no avanzado)
+            stageCondition = `AND pod.stage = '${stage}'`;
+        } else if (statusFilter === 'COMPLETED' && stage) {
+            // Ya avanzó más allá de la etapa del rol
+            stageCondition = `AND pod.stage != '${stage}'`;
+        }
+
+        const [items] = await pool.query(
+            `SELECT pod.id, pod.stage, pod.quantity, pod.notes, pod.assigned_at,
+                    po.order_number, po.priority, po.estimated_delivery,
+                    pc.name as product_name, pc.part_number,
+                    c.company_name as client_name,
+                    (SELECT psl.quantity_passed FROM production_stage_log psl
+                     WHERE psl.order_detail_id = pod.id
+                     ORDER BY psl.stage_started_at DESC LIMIT 1) as last_quantity_passed,
+                    (SELECT psl.to_status FROM production_stage_log psl
+                     WHERE psl.order_detail_id = pod.id
+                     ORDER BY psl.stage_started_at DESC LIMIT 1) as last_stage_reached
+             FROM production_order_details pod
+             JOIN production_orders po ON pod.order_id = po.id
+             JOIN product_catalog pc ON pod.product_id = pc.id
+             JOIN clients c ON po.client_id = c.id
+             WHERE pod.assigned_to = ?
+               AND DATE(pod.assigned_at) >= ?
+               AND DATE(pod.assigned_at) <= ?
+               ${stageCondition}
+             ORDER BY pod.assigned_at DESC`,
+            [userId, dateFrom, dateTo]
+        );
+
+        res.json({ stage, items });
+    } catch (err) { next(err); }
+};
+
+module.exports = { getAll, getById, create, advanceStage, update, remove, getQueue, getAvailableOrders, claimOrder, getMyOrdersHistory };

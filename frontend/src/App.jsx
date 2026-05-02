@@ -22,6 +22,7 @@ import Employees from './pages/Employees';
 import ProductionLines from './pages/ProductionLines';
 import Company from './pages/Company';
 import OperatorStatsDashboard from './pages/OperatorStatsDashboard';
+import MyOrders from './pages/MyOrders';
 export default function App() {
   return (
     <AuthProvider>
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/" element={<PrivateRoute><AppLayout><Dashboard /></AppLayout></PrivateRoute>} />
           <Route path="/operator-stats" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR']}><AppLayout><OperatorStatsDashboard /></AppLayout></PrivateRoute>} />
           <Route path="/work-queue" element={<PrivateRoute><AppLayout><WorkQueue /></AppLayout></PrivateRoute>} />
+          <Route path="/my-orders" element={<PrivateRoute><AppLayout><MyOrders /></AppLayout></PrivateRoute>} />
           <Route path="/planning" element={<PrivateRoute roles={['ADMIN', 'SUPERVISOR', 'VENTAS']}><AppLayout><Planning /></AppLayout></PrivateRoute>} />
           <Route path="/production" element={<PrivateRoute><AppLayout><Production /></AppLayout></PrivateRoute>} />
           <Route path="/inventory" element={<PrivateRoute><AppLayout><Inventory /></AppLayout></PrivateRoute>} />

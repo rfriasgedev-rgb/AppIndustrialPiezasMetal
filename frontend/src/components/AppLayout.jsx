@@ -9,6 +9,7 @@ const navItems = [
     { path: '/', icon: 'fas fa-tachometer-alt', labelKey: 'dashboard', roles: null },
     { path: '/operator-stats', icon: 'fas fa-chart-bar', labelKey: 'operatorStats', roles: ['ADMIN', 'SUPERVISOR'] },
     { path: '/work-queue', icon: 'fas fa-clipboard-check', labelKey: 'myStation', roles: null },
+    { path: '/my-orders', icon: 'fas fa-tasks', labelKey: 'myOrders', roles: null },
     { path: '/planning', icon: 'fas fa-calendar-alt', labelKey: 'mrpPlanning', roles: ['ADMIN', 'SUPERVISOR', 'VENTAS'] },
     { path: '/production', icon: 'fas fa-industry', labelKey: 'productionOrders', roles: null },
     { path: '/inventory', icon: 'fas fa-boxes', labelKey: 'materialInventory', roles: null },
